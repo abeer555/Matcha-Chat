@@ -1459,7 +1459,8 @@
       }
 
       // --- WebSocket Connection ---
-      const WS_SERVER = `ws://localhost:4000`; // Change this to your server address
+      const WS_PROTOCOL = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const WS_SERVER = `${WS_PROTOCOL}//${window.location.host}`;
 
       function connectWebSocket() {
         return new Promise((resolve, reject) => {
