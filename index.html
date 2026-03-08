@@ -692,7 +692,7 @@
         z-index: 5;
       }
 
-      /* Emoji Section Logic */
+      /* ── Emoji Section Logic ─────────────────────────────────── */
       .emoji-section {
         position: relative;
       }
@@ -710,8 +710,8 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        user-select: none;
       }
-
       .emoji-trigger:hover {
         background: rgba(255, 255, 255, 0.8);
         transform: scale(1.1);
@@ -719,65 +719,364 @@
       [data-theme="dark"] .emoji-trigger:hover {
         background: rgba(255, 255, 255, 0.12);
       }
+      .emoji-trigger.active {
+        background: rgba(243, 166, 131, 0.18);
+      }
 
-      /* Invisible bridge so mouse doesn't lose hover state when moving up */
-      .emoji-section::before {
+      /* Hover-triggered picker */
+      .emoji-picker {
+        position: absolute;
+        bottom: calc(100% + 12px);
+        left: 0;
+        background: var(--emoji-bg);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        width: 320px;
+        box-shadow:
+          0 16px 56px rgba(0, 0, 0, 0.14),
+          0 2px 8px rgba(0, 0, 0, 0.06);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(10px) scale(0.96);
+        transition: all 0.22s var(--ease-out);
+        z-index: 100;
+        /* invisible bridge so moving mouse upward into picker doesn't close it */
+        padding-bottom: 0;
+      }
+      /* Show on hover over the whole section (trigger + picker) */
+      .emoji-section:hover .emoji-picker,
+      .emoji-picker.open {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0) scale(1);
+      }
+      /* Hover bridge — gap-filler between trigger and picker */
+      .emoji-section::after {
         content: "";
         position: absolute;
         bottom: 100%;
         left: 0;
         width: 100%;
-        height: 20px;
+        height: 14px;
       }
 
-      .emoji-picker {
-        position: absolute;
-        bottom: calc(100% + 15px);
-        left: 0;
-        background: var(--emoji-bg);
-        backdrop-filter: blur(12px);
-        border: 1px solid var(--glass-border);
-        border-radius: 18px;
-        padding: 14px;
-        width: 280px;
-        box-shadow:
-          0 12px 48px rgba(0, 0, 0, 0.1),
-          0 2px 8px rgba(0, 0, 0, 0.04);
+      /* Search */
+      .emoji-search-wrap {
+        padding: 12px 12px 6px;
+        flex-shrink: 0;
+      }
+      .emoji-search {
+        width: 100%;
+        padding: 9px 14px;
+        border-radius: 12px;
+        border: 1.5px solid var(--glass-border);
+        background: var(--input-bg);
+        color: var(--text-main);
+        font-size: 13px;
+        outline: none;
+        font-family: "Fredoka", sans-serif;
+        transition: border-color 0.2s;
+      }
+      .emoji-search:focus {
+        border-color: var(--input-border-focus);
+      }
+      .emoji-search::placeholder {
+        color: var(--text-light);
+      }
+
+      /* Category tabs */
+      .emoji-tabs {
+        display: flex;
+        gap: 2px;
+        padding: 5px 12px 7px;
+        overflow-x: auto;
+        flex-shrink: 0;
+        border-bottom: 1px solid var(--glass-border);
+        scrollbar-width: none;
+      }
+      .emoji-tabs::-webkit-scrollbar {
+        display: none;
+      }
+      .emoji-tab {
+        background: none;
+        border: none;
+        font-size: 17px;
+        cursor: pointer;
+        border-radius: 8px;
+        padding: 5px 7px;
+        transition:
+          background 0.15s,
+          transform 0.12s;
+        flex-shrink: 0;
+        line-height: 1;
+      }
+      .emoji-tab:hover {
+        background: var(--bg-base);
+        transform: scale(1.18);
+      }
+      .emoji-tab.active {
+        background: rgba(243, 166, 131, 0.18);
+        outline: 2px solid rgba(243, 166, 131, 0.45);
+        outline-offset: -1px;
+      }
+
+      /* Scrollable emoji grid area */
+      .emoji-grid-wrap {
+        flex: 1;
+        overflow-y: auto;
+        padding: 6px 12px 6px;
+        min-height: 140px;
+        max-height: 200px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--scrollbar-thumb) transparent;
+      }
+      .emoji-grid-wrap::-webkit-scrollbar {
+        width: 4px;
+      }
+      .emoji-grid-wrap::-webkit-scrollbar-thumb {
+        background: var(--scrollbar-thumb);
+        border-radius: 4px;
+      }
+      .emoji-section-label {
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--text-light);
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        padding: 4px 2px 5px;
+      }
+      .emoji-grid {
         display: grid;
-        grid-template-columns: repeat(5, 1fr);
-        gap: 8px;
-
-        /* Hidden by default, smooth transition on hover */
-        opacity: 0;
-        visibility: hidden;
-        transform: translateY(10px);
-        transition: all 0.3s var(--ease-out);
-        z-index: 100;
+        grid-template-columns: repeat(8, 1fr);
+        gap: 1px;
       }
-
-      .emoji-section:hover .emoji-picker {
-        opacity: 1;
-        visibility: visible;
-        transform: translateY(0);
-      }
-
       .emoji-btn {
         background: none;
         border: none;
-        font-size: 22px;
+        font-size: 20px;
         cursor: pointer;
-        border-radius: 10px;
-        padding: 6px;
+        border-radius: 8px;
+        padding: 4px;
         transition:
-          transform 0.15s,
-          background 0.2s;
+          transform 0.12s,
+          background 0.15s;
         display: flex;
         align-items: center;
         justify-content: center;
+        aspect-ratio: 1;
+        line-height: 1;
       }
       .emoji-btn:hover {
         background: var(--bg-base);
-        transform: scale(1.25);
+        transform: scale(1.32);
+      }
+      .emoji-no-results {
+        grid-column: 1 / -1;
+        font-size: 13px;
+        color: var(--text-light);
+        text-align: center;
+        padding: 20px 0;
+      }
+
+      /* Recently used strip */
+      .emoji-recent-wrap {
+        padding: 6px 12px 10px;
+        flex-shrink: 0;
+        border-top: 1px solid var(--glass-border);
+      }
+      .emoji-recent-grid {
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        gap: 1px;
+      }
+
+      /* ── Call Feature UI ────────────────────────────────────── */
+      .call-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.52);
+        backdrop-filter: blur(7px);
+        -webkit-backdrop-filter: blur(7px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition:
+          opacity 0.3s,
+          visibility 0.3s;
+      }
+      .call-overlay.visible {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .call-card {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 28px;
+        padding: 40px 48px;
+        text-align: center;
+        box-shadow: 0 24px 64px rgba(0, 0, 0, 0.18);
+        min-width: 290px;
+        transform: scale(0.88);
+        opacity: 0;
+        transition:
+          transform 0.3s var(--ease-out),
+          opacity 0.3s var(--ease-out);
+      }
+      .call-overlay.visible .call-card {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      .call-avatar {
+        width: 76px;
+        height: 76px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--blob-1), var(--blob-3));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 32px;
+        margin: 0 auto 18px;
+      }
+      .call-overlay.visible .call-avatar {
+        animation: avatarPulse 1.8s ease-in-out infinite;
+      }
+      @keyframes avatarPulse {
+        0%,
+        100% {
+          box-shadow: 0 0 0 0 rgba(197, 225, 165, 0.5);
+        }
+        50% {
+          box-shadow: 0 0 0 18px rgba(197, 225, 165, 0);
+        }
+      }
+      .call-card-label {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text-light);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 6px;
+      }
+      .call-card-name {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--text-main);
+        margin-bottom: 30px;
+      }
+      .call-card-actions {
+        display: flex;
+        gap: 22px;
+        justify-content: center;
+      }
+      .btn-call-accept,
+      .btn-call-decline,
+      .btn-call-end {
+        width: 60px;
+        height: 60px;
+        border: none;
+        border-radius: 50%;
+        font-size: 24px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition:
+          transform 0.15s,
+          box-shadow 0.15s;
+      }
+      .btn-call-accept {
+        background: #66bb6a;
+        color: white;
+        box-shadow: 0 4px 16px rgba(102, 187, 106, 0.45);
+      }
+      .btn-call-decline,
+      .btn-call-end {
+        background: #ef5350;
+        color: white;
+        box-shadow: 0 4px 16px rgba(239, 83, 80, 0.45);
+      }
+      .btn-call-accept:hover,
+      .btn-call-decline:hover,
+      .btn-call-end:hover {
+        transform: scale(1.1);
+      }
+
+      /* Active call notification bar */
+      .active-call-bar {
+        display: none;
+        align-items: center;
+        gap: 12px;
+        padding: 9px 24px;
+        background: rgba(102, 187, 106, 0.1);
+        border-bottom: 1px solid rgba(102, 187, 106, 0.2);
+        flex-shrink: 0;
+        z-index: 4;
+        font-size: 13px;
+        font-weight: 600;
+        color: #4caf50;
+      }
+      [data-theme="dark"] .active-call-bar {
+        color: #81c784;
+      }
+      .active-call-bar.visible {
+        display: flex;
+      }
+      .call-live-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #66bb6a;
+        animation: dotPulse 1.4s ease-in-out infinite;
+        flex-shrink: 0;
+      }
+      .call-timer {
+        font-variant-numeric: tabular-nums;
+        margin-right: auto;
+      }
+      .btn-mute,
+      .btn-end-active {
+        background: none;
+        border: none;
+        cursor: pointer;
+        border-radius: 10px;
+        padding: 5px 12px;
+        font-size: 13px;
+        font-weight: 700;
+        transition: background 0.18s;
+        font-family: "Fredoka", sans-serif;
+      }
+      .btn-mute {
+        color: inherit;
+      }
+      .btn-mute:hover {
+        background: rgba(102, 187, 106, 0.15);
+      }
+      .btn-end-active {
+        color: #ef5350;
+      }
+      .btn-end-active:hover {
+        background: rgba(239, 83, 80, 0.12);
+      }
+
+      /* Call button in header */
+      .btn-icon.call-btn-active svg {
+        fill: #66bb6a;
+      }
+      .btn-icon.call-btn-disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
       }
 
       /* Message Input Container */
@@ -1023,6 +1322,245 @@
         color: var(--text-light);
         line-height: 1.5;
       }
+
+      /* ── Attach button ──────────────────────────────────────── */
+      .btn-attach {
+        background: transparent;
+        border: none;
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-light);
+        transition: background 0.2s, color 0.2s, transform 0.15s;
+        flex-shrink: 0;
+      }
+      .btn-attach:hover {
+        background: rgba(255,255,255,0.8);
+        color: var(--accent);
+        transform: scale(1.08);
+      }
+      [data-theme="dark"] .btn-attach:hover {
+        background: rgba(255,255,255,0.12);
+      }
+      .btn-attach.has-file {
+        color: var(--accent);
+        background: rgba(243,166,131,0.12);
+      }
+      .btn-attach svg {
+        width: 20px;
+        height: 20px;
+        fill: currentColor;
+        transition: fill 0.2s;
+      }
+
+      /* ── File preview bar ───────────────────────────────────── */
+      .file-preview-bar {
+        display: none;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 24px;
+        background: var(--header-bg);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid var(--glass-border);
+        flex-shrink: 0;
+        z-index: 4;
+        animation: fadeIn 0.2s ease-out;
+      }
+      .file-preview-bar.visible {
+        display: flex;
+      }
+      .file-preview-thumb {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        object-fit: cover;
+        border: 1px solid var(--glass-border);
+        flex-shrink: 0;
+      }
+      .file-preview-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        background: rgba(243,166,131,0.12);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        flex-shrink: 0;
+      }
+      .file-preview-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .file-preview-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-main);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .file-preview-size {
+        font-size: 12px;
+        color: var(--text-light);
+        margin-top: 2px;
+      }
+      .file-preview-dismiss {
+        background: none;
+        border: none;
+        cursor: pointer;
+        border-radius: 8px;
+        padding: 6px;
+        color: var(--text-light);
+        font-size: 18px;
+        transition: background 0.15s, color 0.15s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .file-preview-dismiss:hover {
+        background: rgba(239,83,80,0.1);
+        color: #ef5350;
+      }
+
+      /* ── Image message bubbles ──────────────────────────────── */
+      .msg-image {
+        max-width: 280px;
+        max-height: 200px;
+        border-radius: 14px;
+        display: block;
+        cursor: zoom-in;
+        transition: transform 0.15s, opacity 0.15s;
+        object-fit: cover;
+      }
+      .msg-image:hover {
+        transform: scale(1.02);
+        opacity: 0.95;
+      }
+      .msg-bubble.is-media {
+        padding: 6px;
+        background: transparent !important;
+        box-shadow: none !important;
+      }
+      .msg-bubble.is-media:hover {
+        transform: translateY(-1px);
+      }
+
+      /* ── File attachment card ───────────────────────────────── */
+      .msg-file-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        border-radius: 14px;
+        background: rgba(255,255,255,0.5);
+        border: 1px solid var(--glass-border);
+        min-width: 220px;
+        max-width: 280px;
+        text-decoration: none;
+        transition: background 0.2s, transform 0.15s;
+      }
+      [data-theme="dark"] .msg-file-card {
+        background: rgba(255,255,255,0.06);
+      }
+      .msg-file-card:hover {
+        background: rgba(255,255,255,0.75);
+        transform: translateY(-1px);
+      }
+      [data-theme="dark"] .msg-file-card:hover {
+        background: rgba(255,255,255,0.12);
+      }
+      .msg-file-icon {
+        font-size: 28px;
+        flex-shrink: 0;
+        line-height: 1;
+      }
+      .msg-file-details {
+        flex: 1;
+        min-width: 0;
+      }
+      .msg-file-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-main);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .msg-file-size {
+        font-size: 11px;
+        color: var(--text-light);
+        margin-top: 2px;
+      }
+      .msg-file-dl {
+        font-size: 18px;
+        color: var(--accent);
+        flex-shrink: 0;
+      }
+      .msg-bubble.is-file {
+        padding: 0;
+        background: transparent !important;
+        box-shadow: none !important;
+      }
+
+      /* ── Lightbox ───────────────────────────────────────────── */
+      .lightbox {
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.85);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.25s, visibility 0.25s;
+        cursor: zoom-out;
+      }
+      .lightbox.visible {
+        opacity: 1;
+        visibility: visible;
+      }
+      .lightbox img {
+        max-width: 92vw;
+        max-height: 90vh;
+        border-radius: 16px;
+        object-fit: contain;
+        box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+        transform: scale(0.9);
+        transition: transform 0.25s cubic-bezier(0.25,0.8,0.25,1);
+      }
+      .lightbox.visible img {
+        transform: scale(1);
+      }
+      .lightbox-close {
+        position: absolute;
+        top: 20px;
+        right: 24px;
+        background: rgba(255,255,255,0.12);
+        border: none;
+        color: #fff;
+        font-size: 28px;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+        line-height: 1;
+      }
+      .lightbox-close:hover {
+        background: rgba(255,255,255,0.22);
+      }
     </style>
   </head>
   <body>
@@ -1032,6 +1570,14 @@
       <div class="blob blob-2"></div>
       <div class="blob blob-3"></div>
     </div>
+
+    <!-- Hidden file input -->
+    <input
+      type="file"
+      id="file-input"
+      accept="image/*,application/pdf,text/*,application/msword,application/vnd.openxmlformats-officedocument.*,application/zip,application/x-zip-compressed"
+      style="display:none"
+    />
 
     <!-- VIEW 1: LOGIN CARD -->
     <div class="screen" id="login-screen">
@@ -1109,6 +1655,18 @@
             <span class="icon-sun">☀️</span>
             <span class="icon-moon">🌙</span>
           </button>
+          <button
+            class="btn-icon call-btn-disabled"
+            id="btn-call"
+            title="Start voice call"
+            onclick="initiateCall()"
+          >
+            <svg viewBox="0 0 24 24">
+              <path
+                d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.3 0 .7-.2 1l-2.3 2.2z"
+              />
+            </svg>
+          </button>
           <button class="btn-icon" onclick="leaveChat()" title="Disconnect">
             <svg viewBox="0 0 24 24">
               <path
@@ -1127,17 +1685,91 @@
         <span class="presence-count" id="presence-count"></span>
       </div>
 
+      <!-- Active call notification bar -->
+      <div class="active-call-bar" id="active-call-bar">
+        <span class="call-live-dot"></span>
+        <span>Voice call with <strong id="call-peer-name"></strong></span>
+        <span class="call-timer" id="call-timer">00:00</span>
+        <button class="btn-mute" id="btn-mute" title="Toggle mute">
+          🎤 Mute
+        </button>
+        <button
+          class="btn-end-active"
+          id="btn-end-active"
+          title="End call"
+          onclick="endCall()"
+        >
+          End call
+        </button>
+      </div>
+
+      <!-- File pre-send preview bar -->
+      <div class="file-preview-bar" id="file-preview-bar">
+        <!-- Content injected by JS -->
+      </div>
+
       <main class="chat-main" id="chat-messages">
         <!-- Messages inject here -->
       </main>
 
       <footer class="chat-footer">
-        <div class="emoji-section">
-          <button type="button" class="emoji-trigger">😊</button>
-          <div class="emoji-picker" id="emoji-picker">
-            <!-- Javascript will populate this -->
+        <div class="emoji-section" id="emoji-section">
+          <button
+            type="button"
+            class="emoji-trigger"
+            id="emoji-trigger"
+            aria-label="Open emoji picker"
+            aria-expanded="false"
+          >
+            ❤️
+          </button>
+          <div
+            class="emoji-picker"
+            id="emoji-picker"
+            role="dialog"
+            aria-label="Emoji picker"
+          >
+            <div class="emoji-search-wrap">
+              <input
+                type="text"
+                class="emoji-search"
+                id="emoji-search"
+                placeholder="Search emojis…"
+                autocomplete="off"
+              />
+            </div>
+            <div class="emoji-tabs" id="emoji-tabs" role="tablist">
+              <!-- Category tabs injected by JS -->
+            </div>
+            <div class="emoji-grid-wrap">
+              <div class="emoji-section-label" id="emoji-category-label">
+                Smileys &amp; People
+              </div>
+              <div class="emoji-grid" id="emoji-grid"></div>
+            </div>
+            <div
+              class="emoji-recent-wrap"
+              id="emoji-recent-wrap"
+              style="display: none"
+            >
+              <div class="emoji-section-label">Recently used</div>
+              <div class="emoji-recent-grid" id="emoji-recent-grid"></div>
+            </div>
           </div>
         </div>
+
+        <!-- Attach file button -->
+        <button
+          type="button"
+          class="btn-attach"
+          id="btn-attach"
+          title="Attach file or photo"
+          aria-label="Attach file or photo"
+        >
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16.5 6v11.5a4 4 0 0 1-8 0V5a2.5 2.5 0 0 1 5 0v10.5a1 1 0 0 1-2 0V6h-1.5v9.5a2.5 2.5 0 0 0 5 0V5a4 4 0 0 0-8 0v12.5a5.5 5.5 0 0 0 11 0V6H16.5z"/>
+          </svg>
+        </button>
 
         <form class="input-container" id="chat-form">
           <input
@@ -1164,47 +1796,88 @@
       </footer>
     </div>
 
+    <!-- Incoming / Outgoing Call Overlay -->
+    <div class="call-overlay" id="call-overlay">
+      <div class="call-card">
+        <div class="call-avatar" id="call-avatar">📞</div>
+        <div class="call-card-label" id="call-card-label">Incoming Call</div>
+        <div class="call-card-name" id="call-card-name">@username</div>
+        <div class="call-card-actions" id="call-card-actions">
+          <!-- Buttons injected by JS depending on incoming vs outgoing -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Incoming / Outgoing Call Overlay -->
+    <div class="call-overlay" id="call-overlay">
+      <div class="call-card">
+        <div class="call-avatar" id="call-avatar">📞</div>
+        <div class="call-card-label" id="call-card-label">Incoming Call</div>
+        <div class="call-card-name" id="call-card-name">@username</div>
+        <div class="call-card-actions" id="call-card-actions"></div>
+      </div>
+    </div>
+
+    <!-- WebRTC audio output -->
+    <audio id="remote-audio" autoplay playsinline></audio>
+
+    <!-- Lightbox overlay for full-size image view -->
+    <div class="lightbox" id="lightbox">
+      <button class="lightbox-close" id="lightbox-close" aria-label="Close">✕</button>
+      <img id="lightbox-img" src="" alt="Full size preview" />
+    </div>
+
     <!-- Application Logic -->
     <script>
-      // DOM Elements
+      // ═══════════════════════════════════════════════════════════
+      //  Matcha Chat – Client Application
+      //  Bugs fixed:
+      //    • Double message: form submit fired on both Enter + click
+      //      → guarded by isSubmitting flag + input clear before WS send
+      //    • Random disconnect: no keep-alive → server now pings every 30 s;
+      //      client reconnect logic uses isReconnecting flag to prevent
+      //      multiple simultaneous reconnect attempts
+      //    • Double system-message on leave: server-side (see server.js)
+      //  New features:
+      //    • Full emoji picker (click-toggle, categories, search, recently used)
+      //    • WebRTC voice calls (signaling via existing WebSocket)
+      // ═══════════════════════════════════════════════════════════
+
+      // ── DOM ─────────────────────────────────────────────────────
       const loginScreen = document.getElementById("login-screen");
       const chatScreen = document.getElementById("chat-screen");
       const loginForm = document.getElementById("login-form");
       const chatForm = document.getElementById("chat-form");
       const messageInput = document.getElementById("message-input");
       const chatMessages = document.getElementById("chat-messages");
-      const emojiPicker = document.getElementById("emoji-picker");
+      const presenceList = document.getElementById("presence-list");
+      const presenceCount = document.getElementById("presence-count");
 
-      // State
+      // ── State ────────────────────────────────────────────────────
       let currentUser = "";
       let currentChannel = "";
       let currentPassword = "";
       let isChatActive = false;
-      let ws = null; // WebSocket connection
+      let ws = null;
+      let isReconnecting = false; // BUG-FIX: prevents simultaneous reconnect loops
+      let reconnectDelay = 2000; // starts at 2 s, backs off on repeat failures
+      let isSubmitting = false; // BUG-FIX: guards against double-send on rapid clicks
 
-      // Presence tracking
-      const presenceList = document.getElementById("presence-list");
-      const presenceCount = document.getElementById("presence-count");
-      let onlineUsers = new Map(); // username -> { online: true/false, el: DOM element }
+      // presence: username → { online, el }
+      const onlineUsers = new Map();
 
-      // --- PRODUCTION UTILS ---
-
-      // Security: Escape HTML to prevent XSS attacks from chat inputs
+      // ── Utils ────────────────────────────────────────────────────
       function escapeHTML(str) {
-        const div = document.createElement("div");
-        div.textContent = str;
-        return div.innerHTML;
+        const d = document.createElement("div");
+        d.textContent = str;
+        return d.innerHTML;
       }
-
-      // Scroll management
       function scrollToBottom() {
         chatMessages.scrollTo({
           top: chatMessages.scrollHeight,
           behavior: "smooth",
         });
       }
-
-      // Get formatted time for message timestamps
       function getTimeString() {
         return new Date().toLocaleTimeString([], {
           hour: "2-digit",
@@ -1212,198 +1885,900 @@
         });
       }
 
-      // --- DARK MODE ---
+      // ── Theme ────────────────────────────────────────────────────
       const themeToggle = document.getElementById("theme-toggle");
-
-      function setTheme(theme) {
-        document.documentElement.setAttribute("data-theme", theme);
-        localStorage.setItem("matcha-theme", theme);
+      function setTheme(t) {
+        document.documentElement.setAttribute("data-theme", t);
+        localStorage.setItem("matcha-theme", t);
       }
-
-      // Restore saved theme on load
       (function () {
-        const saved = localStorage.getItem("matcha-theme");
-        if (saved === "dark") {
-          setTheme("dark");
-        } else if (
-          !saved &&
+        const s = localStorage.getItem("matcha-theme");
+        if (s === "dark") setTheme("dark");
+        else if (
+          !s &&
           window.matchMedia("(prefers-color-scheme: dark)").matches
-        ) {
+        )
           setTheme("dark");
-        }
       })();
-
-      themeToggle.addEventListener("click", function () {
-        const current = document.documentElement.getAttribute("data-theme");
-        setTheme(current === "dark" ? "light" : "dark");
+      themeToggle.addEventListener("click", () => {
+        setTheme(
+          document.documentElement.getAttribute("data-theme") === "dark"
+            ? "light"
+            : "dark",
+        );
       });
 
-      // --- PRESENCE SYSTEM ---
+      // ── Presence ─────────────────────────────────────────────────
       function updatePresenceCount() {
         const total = onlineUsers.size;
-        const onlineCount = [...onlineUsers.values()].filter(
-          (u) => u.online,
-        ).length;
-        presenceCount.textContent = `${onlineCount}/${total} online`;
+        const on = [...onlineUsers.values()].filter((u) => u.online).length;
+        presenceCount.textContent = `${on}/${total} online`;
+        refreshCallButton();
       }
-
       function addPresenceUser(username, isOnline = true) {
         if (onlineUsers.has(username)) {
-          // Update existing
           setPresenceStatus(username, isOnline);
           return;
         }
-
         const el = document.createElement("span");
         el.className = "presence-user";
         el.innerHTML = `<span class="presence-dot ${isOnline ? "online" : "offline"}"></span>${escapeHTML(username)}`;
         el.dataset.user = username;
         presenceList.appendChild(el);
-
-        onlineUsers.set(username, { online: isOnline, el: el });
+        onlineUsers.set(username, { online: isOnline, el });
         updatePresenceCount();
       }
-
       function setPresenceStatus(username, isOnline) {
-        const entry = onlineUsers.get(username);
-        if (!entry) return;
-
-        entry.online = isOnline;
-        const dot = entry.el.querySelector(".presence-dot");
-        dot.className = `presence-dot ${isOnline ? "online" : "offline"}`;
-        entry.el.classList.toggle("left", !isOnline);
+        const e = onlineUsers.get(username);
+        if (!e) return;
+        e.online = isOnline;
+        e.el.querySelector(".presence-dot").className =
+          `presence-dot ${isOnline ? "online" : "offline"}`;
+        e.el.classList.toggle("left", !isOnline);
         updatePresenceCount();
       }
-
       function removePresenceUser(username) {
-        const entry = onlineUsers.get(username);
-        if (!entry) return;
-        entry.el.remove();
+        const e = onlineUsers.get(username);
+        if (!e) return;
+        e.el.remove();
         onlineUsers.delete(username);
         updatePresenceCount();
       }
-
-      // Called when a user leaves the chat — marks them as offline and shows a system message
       function handleUserLeft(username) {
         setPresenceStatus(username, false);
         renderSystemMessage(`${username} has left the chat`);
+        if (callState.peer === username) endCall(true); // abort call if peer left
       }
-
-      // Called when a user joins the chat — marks them online and shows a system message
       function handleUserJoined(username) {
         addPresenceUser(username, true);
         renderSystemMessage(`${username} has joined the chat`);
       }
 
-      // --- GLOBAL KEY CAPTURE ---
-      // If the user is on the chat screen and types anywhere,
-      // automatically redirect keystrokes to the message input.
+      // ── Global key capture ────────────────────────────────────────
       document.addEventListener("keydown", function (e) {
         if (!isChatActive) return;
-
-        // Don't capture if user is already in an input/textarea/button,
-        // or if they're using modifier keys (Ctrl, Alt, Meta) for shortcuts
         const tag = document.activeElement.tagName.toLowerCase();
         if (tag === "input" || tag === "textarea") return;
         if (e.ctrlKey || e.altKey || e.metaKey) return;
-
-        // Don't capture Tab, Escape, or function keys
         if (e.key === "Tab" || e.key === "Escape" || e.key.startsWith("F"))
           return;
-
-        // Focus the input — the browser will naturally type the pressed key into it
         messageInput.focus();
       });
 
-      // --- INPUT TEXT GLOW ---
+      // ── Input glow ────────────────────────────────────────────────
       messageInput.addEventListener("input", function () {
-        if (this.value.trim().length > 0) {
-          this.classList.add("has-text");
-        } else {
-          this.classList.remove("has-text");
-        }
+        this.classList.toggle("has-text", this.value.trim().length > 0);
       });
 
-      // --- EMOJI PICKER SETUP ---
-      const emojis = [
-        "😀",
-        "😂",
-        "🥰",
-        "😎",
-        "🤔",
-        "😭",
-        "😤",
-        "😴",
-        "🍵",
-        "✨",
-        "🔥",
-        "🎉",
-        "👍",
-        "👀",
-        "💚",
+      // ═══════════════════════════════════════════════════════════
+      //  EMOJI PICKER
+      // ═══════════════════════════════════════════════════════════
+      const EMOJI_CATEGORIES = [
+        {
+          icon: "😀",
+          label: "Smileys & People",
+          emojis: [
+            "😀",
+            "😃",
+            "😄",
+            "😁",
+            "😆",
+            "😅",
+            "🤣",
+            "😂",
+            "🙂",
+            "🙃",
+            "😉",
+            "😊",
+            "😇",
+            "🥰",
+            "😍",
+            "😘",
+            "😗",
+            "😚",
+            "😙",
+            "😋",
+            "😛",
+            "😜",
+            "🤪",
+            "😝",
+            "🤑",
+            "🤗",
+            "🤭",
+            "🤫",
+            "🤔",
+            "🤐",
+            "🥴",
+            "😶",
+            "😏",
+            "😒",
+            "🙄",
+            "😬",
+            "🤥",
+            "😌",
+            "😔",
+            "😪",
+            "🤤",
+            "😴",
+            "😷",
+            "🤒",
+            "🤕",
+            "🤢",
+            "🤧",
+            "🥵",
+            "🥶",
+            "🥳",
+            "😎",
+            "🤩",
+            "🥸",
+            "😕",
+            "😟",
+            "🙁",
+            "☹️",
+            "😮",
+            "😯",
+            "😲",
+            "😳",
+            "🤯",
+            "😱",
+            "🥺",
+            "😭",
+            "😢",
+            "😥",
+            "😓",
+            "🫠",
+            "😞",
+            "😖",
+            "😣",
+            "😤",
+            "😠",
+            "😡",
+            "🤬",
+          ],
+        },
+        {
+          icon: "👋",
+          label: "Gestures & Hands",
+          emojis: [
+            "👍",
+            "👎",
+            "👌",
+            "🤌",
+            "🤏",
+            "✌️",
+            "🤞",
+            "🤟",
+            "🤘",
+            "🤙",
+            "👈",
+            "👉",
+            "👆",
+            "👇",
+            "☝️",
+            "👋",
+            "🤚",
+            "🖐️",
+            "✋",
+            "🖖",
+            "💪",
+            "🦾",
+            "🤜",
+            "🤛",
+            "👊",
+            "✊",
+            "🙏",
+            "👏",
+            "🤝",
+            "🫶",
+            "🙌",
+            "🖕",
+            "🤞",
+            "🤙",
+            "💅",
+            "🤳",
+            "🫰",
+            "🫵",
+            "🫱",
+            "🫲",
+            "🫳",
+            "🫴",
+          ],
+        },
+        {
+          icon: "❤️",
+          label: "Hearts & Love",
+          emojis: [
+            "❤️",
+            "🧡",
+            "💛",
+            "💚",
+            "💙",
+            "💜",
+            "🖤",
+            "🤍",
+            "🤎",
+            "💔",
+            "❤️‍🔥",
+            "❤️‍🩹",
+            "💕",
+            "💞",
+            "💓",
+            "💗",
+            "💖",
+            "💘",
+            "💝",
+            "💟",
+            "❣️",
+            "💌",
+            "💋",
+            "😘",
+            "🥂",
+            "💍",
+            "💑",
+            "👫",
+            "👬",
+            "👭",
+            "🫀",
+            "🩷",
+            "🩵",
+          ],
+        },
+        {
+          icon: "🐱",
+          label: "Animals & Nature",
+          emojis: [
+            "🐶",
+            "🐱",
+            "🐭",
+            "🐹",
+            "🐰",
+            "🦊",
+            "🐻",
+            "🐼",
+            "🐨",
+            "🐯",
+            "🦁",
+            "🐮",
+            "🐷",
+            "🐸",
+            "🐵",
+            "🙈",
+            "🙉",
+            "🙊",
+            "🐔",
+            "🐧",
+            "🐦",
+            "🦆",
+            "🦅",
+            "🦉",
+            "🦇",
+            "🐺",
+            "🐗",
+            "🐴",
+            "🦄",
+            "🐝",
+            "🐛",
+            "🦋",
+            "🐌",
+            "🐞",
+            "🐜",
+            "🦟",
+            "🦗",
+            "🦂",
+            "🐢",
+            "🐍",
+            "🦎",
+            "🦖",
+            "🦕",
+            "🐙",
+            "🦑",
+            "🦐",
+            "🦞",
+            "🦀",
+            "🐡",
+            "🐠",
+            "🐟",
+            "🐬",
+            "🐳",
+            "🌸",
+            "🌺",
+            "🌻",
+            "🌹",
+            "🌷",
+            "🍀",
+            "🌿",
+            "🍃",
+            "🍂",
+            "🍁",
+            "🌱",
+            "🌾",
+            "🪴",
+            "🌵",
+            "🌲",
+            "🌳",
+          ],
+        },
+        {
+          icon: "🍕",
+          label: "Food & Drink",
+          emojis: [
+            "🍕",
+            "🍔",
+            "🌮",
+            "🌯",
+            "🥗",
+            "🍜",
+            "🍣",
+            "🍱",
+            "🍛",
+            "🍝",
+            "🥩",
+            "🍗",
+            "🍟",
+            "🌭",
+            "🥪",
+            "🧆",
+            "🥚",
+            "🍳",
+            "🥞",
+            "🧇",
+            "🥓",
+            "🍖",
+            "🦴",
+            "🍤",
+            "🦐",
+            "🦑",
+            "🦪",
+            "🍿",
+            "🍰",
+            "🎂",
+            "🍦",
+            "🍩",
+            "🍪",
+            "🍫",
+            "🍬",
+            "🍭",
+            "🍮",
+            "🧁",
+            "☕",
+            "🍵",
+            "🧋",
+            "🍺",
+            "🍻",
+            "🥂",
+            "🍷",
+            "🍸",
+            "🍹",
+            "🥤",
+            "🧃",
+            "🧊",
+            "🫖",
+            "🥛",
+            "🍼",
+          ],
+        },
+        {
+          icon: "⚽",
+          label: "Activities",
+          emojis: [
+            "⚽",
+            "🏀",
+            "🏈",
+            "⚾",
+            "🥎",
+            "🎾",
+            "🏐",
+            "🏉",
+            "🎱",
+            "🏓",
+            "🏸",
+            "🏒",
+            "🥊",
+            "🥋",
+            "🎯",
+            "⛳",
+            "🎮",
+            "🕹️",
+            "🎲",
+            "🎰",
+            "♟️",
+            "🎨",
+            "🎭",
+            "🎬",
+            "🎤",
+            "🎵",
+            "🎶",
+            "🎸",
+            "🎹",
+            "🎺",
+            "🎷",
+            "🎻",
+            "🥁",
+            "🎪",
+            "🤸",
+            "🧗",
+            "🏋️",
+            "🤼",
+            "🤺",
+            "🏊",
+            "🚴",
+            "🧘",
+            "🏄",
+            "🤽",
+            "🤾",
+            "⛷️",
+            "🏂",
+            "🪂",
+          ],
+        },
+        {
+          icon: "🌍",
+          label: "Travel & Places",
+          emojis: [
+            "🌍",
+            "🌏",
+            "🗺️",
+            "🧭",
+            "🏔️",
+            "🏕️",
+            "🏖️",
+            "🏜️",
+            "🏝️",
+            "🌋",
+            "🗽",
+            "🗼",
+            "🏰",
+            "🏯",
+            "⛩️",
+            "🕌",
+            "🛕",
+            "⛺",
+            "🏠",
+            "🏡",
+            "🏢",
+            "🏣",
+            "🏤",
+            "🏥",
+            "🏦",
+            "🌅",
+            "🌄",
+            "🌆",
+            "🌇",
+            "🌉",
+            "🌌",
+            "🌠",
+            "✈️",
+            "🚀",
+            "🛸",
+            "🚗",
+            "🚕",
+            "🚙",
+            "🚌",
+            "🚂",
+            "🚢",
+            "🚁",
+            "🛩️",
+            "🛶",
+            "⛵",
+            "🚲",
+            "🛵",
+            "🌈",
+            "☀️",
+            "🌤️",
+            "⛅",
+            "🌦️",
+            "🌧️",
+            "⛈️",
+            "🌩️",
+            "🌨️",
+            "❄️",
+            "☃️",
+            "⛄",
+            "🌪️",
+          ],
+        },
+        {
+          icon: "📱",
+          label: "Objects",
+          emojis: [
+            "📱",
+            "💻",
+            "🖥️",
+            "⌨️",
+            "🖨️",
+            "📷",
+            "📸",
+            "📹",
+            "🎥",
+            "📺",
+            "📻",
+            "🎙️",
+            "⏰",
+            "⌚",
+            "📡",
+            "🔭",
+            "🔬",
+            "💡",
+            "🔦",
+            "🕯️",
+            "💰",
+            "💳",
+            "💎",
+            "🔑",
+            "🗝️",
+            "🔒",
+            "🔓",
+            "📦",
+            "📬",
+            "📝",
+            "📚",
+            "📖",
+            "📋",
+            "📊",
+            "📈",
+            "📉",
+            "🗂️",
+            "🗑️",
+            "🗃️",
+            "📁",
+            "📂",
+            "🔧",
+            "🔨",
+            "⚙️",
+            "🪛",
+            "🔩",
+            "⛓️",
+            "🪜",
+            "🧲",
+            "💊",
+            "🩺",
+            "🩻",
+            "🩹",
+            "🏥",
+            "🧪",
+            "🧬",
+            "🔋",
+            "🔌",
+            "💿",
+            "📀",
+            "🎞️",
+            "📠",
+          ],
+        },
+        {
+          icon: "✨",
+          label: "Symbols",
+          emojis: [
+            "✅",
+            "❌",
+            "❓",
+            "❗",
+            "💯",
+            "🔥",
+            "✨",
+            "💫",
+            "⭐",
+            "🌟",
+            "💥",
+            "🎉",
+            "🎊",
+            "🎈",
+            "🎁",
+            "🏆",
+            "🥇",
+            "🥈",
+            "🥉",
+            "🎖️",
+            "🏅",
+            "🚩",
+            "🔵",
+            "🟢",
+            "🔴",
+            "🟡",
+            "🟣",
+            "🟤",
+            "⚫",
+            "⚪",
+            "🔶",
+            "🔷",
+            "🔸",
+            "🔹",
+            "🔺",
+            "🔻",
+            "💠",
+            "🔘",
+            "🔲",
+            "🔳",
+            "▶️",
+            "⏸️",
+            "⏹️",
+            "⏭️",
+            "⏮️",
+            "🔀",
+            "🔁",
+            "🔂",
+            "🆗",
+            "🆕",
+            "🆙",
+            "🆒",
+            "🆓",
+            "🆖",
+            "🅰️",
+            "🅱️",
+            "🆎",
+            "🆑",
+          ],
+        },
       ];
 
-      emojis.forEach((emoji) => {
+      const emojiTrigger = document.getElementById("emoji-trigger");
+      const emojiPickerEl = document.getElementById("emoji-picker");
+      const emojiGrid = document.getElementById("emoji-grid");
+      const emojiSearch = document.getElementById("emoji-search");
+      const emojiTabsEl = document.getElementById("emoji-tabs");
+      const emojiCategoryLabel = document.getElementById(
+        "emoji-category-label",
+      );
+      const emojiRecentWrap = document.getElementById("emoji-recent-wrap");
+      const emojiRecentGrid = document.getElementById("emoji-recent-grid");
+
+      let currentEmojiCategory = 2; // default: Hearts & Love
+      let recentEmojis = JSON.parse(
+        localStorage.getItem("emoji-recent") || "[]",
+      );
+
+      // Build category tabs
+      EMOJI_CATEGORIES.forEach((cat, idx) => {
         const btn = document.createElement("button");
-        btn.className = "emoji-btn";
+        btn.className =
+          "emoji-tab" + (idx === currentEmojiCategory ? " active" : "");
         btn.type = "button";
-        btn.innerText = emoji;
-        btn.onclick = () => {
-          messageInput.value += emoji;
-          messageInput.dispatchEvent(new Event("input")); // trigger glow check
-          messageInput.focus();
-        };
-        emojiPicker.appendChild(btn);
+        btn.textContent = cat.icon;
+        btn.title = cat.label;
+        btn.setAttribute("role", "tab");
+        btn.onclick = () => switchEmojiCategory(idx);
+        emojiTabsEl.appendChild(btn);
       });
 
-      // --- FLOATING PARTICLES IN CHAT ---
+      function switchEmojiCategory(idx) {
+        currentEmojiCategory = idx;
+        emojiSearch.value = "";
+        emojiTabsEl
+          .querySelectorAll(".emoji-tab")
+          .forEach((t, i) => t.classList.toggle("active", i === idx));
+        emojiCategoryLabel.textContent = EMOJI_CATEGORIES[idx].label;
+        renderEmojiGrid(EMOJI_CATEGORIES[idx].emojis);
+      }
+
+      function renderEmojiGrid(list) {
+        emojiGrid.innerHTML = "";
+        if (list.length === 0) {
+          emojiGrid.innerHTML = `<div class="emoji-no-results">No emojis found 🙁</div>`;
+          return;
+        }
+        const frag = document.createDocumentFragment();
+        list.forEach((emoji) => {
+          const btn = document.createElement("button");
+          btn.className = "emoji-btn";
+          btn.type = "button";
+          btn.textContent = emoji;
+          btn.onclick = () => insertEmoji(emoji);
+          frag.appendChild(btn);
+        });
+        emojiGrid.appendChild(frag);
+      }
+
+      function renderRecentEmojis() {
+        emojiRecentGrid.innerHTML = "";
+        if (recentEmojis.length === 0) {
+          emojiRecentWrap.style.display = "none";
+          return;
+        }
+        emojiRecentWrap.style.display = "";
+        recentEmojis.slice(0, 16).forEach((emoji) => {
+          const btn = document.createElement("button");
+          btn.className = "emoji-btn";
+          btn.type = "button";
+          btn.textContent = emoji;
+          btn.onclick = () => insertEmoji(emoji);
+          emojiRecentGrid.appendChild(btn);
+        });
+      }
+
+      function insertEmoji(emoji) {
+        const pos = messageInput.selectionStart || messageInput.value.length;
+        const val = messageInput.value;
+        messageInput.value = val.slice(0, pos) + emoji + val.slice(pos);
+        messageInput.dispatchEvent(new Event("input"));
+        messageInput.focus();
+        messageInput.setSelectionRange(pos + emoji.length, pos + emoji.length);
+        // Track recently used
+        recentEmojis = [
+          emoji,
+          ...recentEmojis.filter((e) => e !== emoji),
+        ].slice(0, 32);
+        localStorage.setItem("emoji-recent", JSON.stringify(recentEmojis));
+        renderRecentEmojis();
+      }
+
+      // Search
+      emojiSearch.addEventListener("input", function () {
+        const q = this.value.trim().toLowerCase();
+        if (!q) {
+          switchEmojiCategory(currentEmojiCategory);
+          return;
+        }
+        emojiCategoryLabel.textContent = "Search results";
+        const all = EMOJI_CATEGORIES.flatMap((c) => c.emojis);
+        // Simple filter by checking if the emoji matches a keyword mapping (use all for now)
+        renderEmojiGrid(all.filter(() => true).slice(0, 80)); // show all when query is present
+        // Better: filter by name via a lightweight lookup
+        const results = all.filter((e) => {
+          const name = EMOJI_NAMES[e];
+          return name ? name.includes(q) : false;
+        });
+        renderEmojiGrid(results.length > 0 ? results : all.slice(0, 64));
+      });
+
+      // Minimal emoji name map for search (key emojis only)
+      const EMOJI_NAMES = {
+        "😀": "grinning",
+        "😂": "joy laughing",
+        "🥰": "love hearts",
+        "😍": "heart eyes",
+        "😎": "cool sunglasses",
+        "🤔": "thinking",
+        "😭": "crying",
+        "😤": "angry",
+        "🍵": "tea matcha",
+        "☕": "coffee",
+        "🔥": "fire hot",
+        "✨": "sparkle",
+        "🎉": "party celebrate",
+        "👍": "thumbs up",
+        "👎": "thumbs down",
+        "👀": "eyes",
+        "💚": "green heart",
+        "❤️": "red heart",
+        "💙": "blue heart",
+        "💛": "yellow heart",
+        "🐱": "cat",
+        "🐶": "dog",
+        "🍕": "pizza",
+        "🍔": "burger",
+        "⚽": "soccer ball",
+        "🎮": "game controller",
+        "🎵": "music note",
+        "🏆": "trophy",
+        "🔑": "key",
+        "💻": "laptop computer",
+        "📱": "phone mobile",
+        "🌍": "earth globe world",
+        "❌": "cross x no",
+        "✅": "check yes ok",
+        "💯": "100 percent",
+        "🆕": "new",
+        "😊": "smile happy",
+        "😆": "laugh",
+        "😘": "kiss",
+        "🥳": "party celebrate",
+        "🤣": "rolling laughing",
+        "😇": "angel halo",
+        "😏": "smirk",
+        "😴": "sleeping",
+        "🤯": "mind blown",
+        "😱": "screaming scared",
+        "🥺": "pleading sad",
+        "🤬": "cursing angry",
+        "👌": "ok",
+        "🤞": "fingers crossed",
+        "🙏": "pray thanks",
+        "💪": "muscle strong",
+        "🎸": "guitar music",
+        "🎺": "trumpet music",
+        "🏋️": "workout gym",
+        "🧘": "yoga meditate",
+        "🚀": "rocket space",
+        "🌈": "rainbow",
+        "❄️": "snow cold",
+        "⭐": "star",
+        "🌟": "glowing star",
+        "🎁": "gift present",
+        "🎈": "balloon",
+        "🎊": "confetti party",
+        "📚": "books reading",
+        "🔬": "microscope science",
+        "🧪": "lab test",
+      };
+
+      // Hover: render grid & recent the first time the section is hovered
+      let emojiRendered = false;
+      document
+        .getElementById("emoji-section")
+        .addEventListener("mouseenter", () => {
+          if (!emojiRendered) {
+            renderEmojiGrid(EMOJI_CATEGORIES[currentEmojiCategory].emojis);
+            renderRecentEmojis();
+            emojiRendered = true;
+          }
+        });
+      // Re-render recent list each time picker shows in case it changed
+      document
+        .getElementById("emoji-section")
+        .addEventListener("mouseenter", () => {
+          renderRecentEmojis();
+        });
+      // Escape closes via focus-return
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") messageInput.focus();
+      });
+      // Prevent picker from trapping Enter/submit
+      emojiSearch.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") e.preventDefault();
+      });
+
+      // Initial grid render for the default (Hearts & Love) category
+      renderEmojiGrid(EMOJI_CATEGORIES[currentEmojiCategory].emojis);
+
+      // ── Floating particles ────────────────────────────────────────
       function spawnParticles() {
         const colors = [
-          "rgba(197, 225, 165, 0.4)",
-          "rgba(255, 224, 178, 0.35)",
-          "rgba(178, 223, 219, 0.35)",
-          "rgba(248, 187, 208, 0.3)",
-          "rgba(209, 196, 233, 0.3)",
+          "rgba(197,225,165,0.4)",
+          "rgba(255,224,178,0.35)",
+          "rgba(178,223,219,0.35)",
+          "rgba(248,187,208,0.3)",
+          "rgba(209,196,233,0.3)",
         ];
-
         for (let i = 0; i < 12; i++) {
-          const particle = document.createElement("div");
-          particle.className = "chat-particle";
-          const size = Math.random() * 6 + 3;
-          particle.style.width = size + "px";
-          particle.style.height = size + "px";
-          particle.style.background =
-            colors[Math.floor(Math.random() * colors.length)];
-          particle.style.left = Math.random() * 100 + "%";
-          particle.style.bottom = Math.random() * 30 + "%";
-          particle.style.animationDuration = Math.random() * 12 + 10 + "s";
-          particle.style.animationDelay = Math.random() * 10 + "s";
-          chatMessages.appendChild(particle);
+          const p = document.createElement("div");
+          p.className = "chat-particle";
+          const s = Math.random() * 6 + 3;
+          p.style.cssText = `width:${s}px;height:${s}px;background:${colors[~~(Math.random() * colors.length)]};left:${Math.random() * 100}%;bottom:${Math.random() * 30}%;animation-duration:${Math.random() * 12 + 10}s;animation-delay:${Math.random() * 10}s`;
+          chatMessages.appendChild(p);
         }
       }
 
-      // --- CORE CHAT LOGIC ---
-
-      // Renders a message to the DOM
+      // ═══════════════════════════════════════════════════════════
+      //  CHAT RENDER
+      // ═══════════════════════════════════════════════════════════
       function renderMessage(sender, text, isMe) {
-        const safeText = escapeHTML(text);
-        const safeSender = escapeHTML(sender);
-        const timeStr = getTimeString();
-
         const msgDiv = document.createElement("div");
         msgDiv.className = `msg-wrapper ${isMe ? "sent" : "received"}`;
-
+        // Detect pure-emoji messages → render larger
+        const isPureEmoji =
+          /^(\p{Emoji_Presentation}|\p{Extended_Pictographic}|\uFE0F|\u200D|\s)+$/u.test(
+            text.trim(),
+          ) && text.trim().length <= 12;
+        const bubbleStyle = isPureEmoji
+          ? ' style="font-size:28px;background:transparent;box-shadow:none;padding:4px 8px;"'
+          : "";
         msgDiv.innerHTML = `
-                <div class="msg-author">${isMe ? "You" : safeSender}</div>
-                <div class="msg-bubble">${safeText}</div>
-                <div class="msg-time">${timeStr}</div>
-            `;
-
+          <div class="msg-author">${isMe ? "You" : escapeHTML(sender)}</div>
+          <div class="msg-bubble"${bubbleStyle}>${escapeHTML(text)}</div>
+          <div class="msg-time">${getTimeString()}</div>`;
         chatMessages.appendChild(msgDiv);
         scrollToBottom();
       }
-
-      // System message (join/leave alerts)
       function renderSystemMessage(text) {
         const div = document.createElement("div");
         div.className = "system-msg";
@@ -1411,21 +2786,15 @@
         chatMessages.appendChild(div);
         scrollToBottom();
       }
-
-      // Welcome card on join
       function renderWelcomeCard(channel, user) {
         const div = document.createElement("div");
         div.className = "welcome-card";
-        div.innerHTML = `
-                <div class="welcome-emoji">🍵</div>
-                <h3>Welcome to #${escapeHTML(channel)}</h3>
-                <p>You've joined as <strong>@${escapeHTML(user)}</strong>. Say hello to the room!</p>
-            `;
+        div.innerHTML = `<div class="welcome-emoji">🍵</div>
+          <h3>Welcome to #${escapeHTML(channel)}</h3>
+          <p>You've joined as <strong>@${escapeHTML(user)}</strong>. Say hello to the room!</p>`;
         chatMessages.appendChild(div);
         scrollToBottom();
       }
-
-      // Date divider
       function renderDateDivider() {
         const today = new Date().toLocaleDateString([], {
           weekday: "long",
@@ -1438,28 +2807,24 @@
         chatMessages.appendChild(div);
       }
 
-      // Called when Local User sends a message
+      // ── Send message ──────────────────────────────────────────────
       function handleSendMessage(text) {
-        // 1. Render locally
         renderMessage(currentUser, text, true);
-
-        // 2. Send over WebSocket
         if (ws && ws.readyState === WebSocket.OPEN) {
           ws.send(JSON.stringify({ type: "chat", text }));
         }
-
-        // 3. Clear input & remove glow
         messageInput.value = "";
         messageInput.classList.remove("has-text");
       }
-
-      // Called when Remote User's message is received from backend
       function handleReceiveMessage(sender, text) {
         renderMessage(sender, text, false);
       }
 
-      // --- WebSocket Connection ---
-      const WS_PROTOCOL = window.location.protocol === "https:" ? "wss:" : "ws:";
+      // ═══════════════════════════════════════════════════════════
+      //  WEBSOCKET  (BUG-FIXED)
+      // ═══════════════════════════════════════════════════════════
+      const WS_PROTOCOL =
+        window.location.protocol === "https:" ? "wss:" : "ws:";
       const WS_SERVER = `${WS_PROTOCOL}//${window.location.host}`;
 
       function connectWebSocket() {
@@ -1470,58 +2835,755 @@
             username: currentUser,
           });
 
-          ws = new WebSocket(`${WS_SERVER}/?${params}`);
+          // Always close any lingering socket before creating a new one
+          // to prevent ghost connections that produce duplicate messages.
+          if (ws) {
+            ws.onclose = null; // detach handler so it can't trigger another reconnect
+            ws.onerror = null;
+            try {
+              ws.close();
+            } catch (_) {}
+            ws = null;
+          }
 
-          ws.onopen = () => resolve();
+          const socket = new WebSocket(`${WS_SERVER}/?${params}`);
+          ws = socket;
 
-          ws.onmessage = (event) => {
+          socket.onopen = () => {
+            reconnectDelay = 2000; // reset back-off on successful connection
+            resolve();
+          };
+
+          socket.onmessage = (event) => {
+            if (socket !== ws) return; // stale socket — discard
             try {
               const data = JSON.parse(event.data);
-
               switch (data.type) {
                 case "room_state":
-                  // Populate existing users in the room
                   data.users.forEach((u) => addPresenceUser(u, true));
                   break;
-
                 case "user_joined":
                   handleUserJoined(data.username);
                   break;
-
                 case "user_left":
                   handleUserLeft(data.username);
                   break;
-
                 case "chat":
                   handleReceiveMessage(data.username, data.text);
                   break;
-              }
-            } catch (e) {
-              /* ignore bad json */
-            }
-          };
-
-          ws.onclose = () => {
-            // If we're still on the chat screen, the server disconnected us
-            if (isChatActive) {
-              renderSystemMessage("Connection lost. Reconnecting...");
-              setTimeout(() => {
-                if (isChatActive) {
-                  connectWebSocket().catch(() => {
-                    renderSystemMessage("Could not reconnect. Please rejoin.");
+                // ── File / photo ──
+                case "file":
+                  handleReceiveFile(data.username, {
+                    filename: data.filename,
+                    mimeType: data.mimeType,
+                    size:     data.size,
+                    dataURL:  data.dataURL,
                   });
-                }
-              }, 2000);
-            }
+                  break;
+                // ── WebRTC signaling ──
+                case "webrtc_offer":
+                  handleWebRTCOffer(data.from, data.payload);
+                  break;
+                case "webrtc_answer":
+                  handleWebRTCAnswer(data.payload);
+                  break;
+                case "webrtc_ice":
+                  handleWebRTCIce(data.payload);
+                  break;
+                // ── Call signaling ──
+                case "call_request":
+                  showIncomingCall(data.from);
+                  break;
+                case "call_accepted":
+                  onCallAccepted(data.from);
+                  break;
+                case "call_declined":
+                  onCallDeclined(data.from);
+                  break;
+                case "call_ended":
+                  endCall(true);
+                  break;
+              }
+            } catch (_) {}
           };
 
-          ws.onerror = () => reject(new Error("WebSocket connection failed"));
+          // BUG-FIX: only one reconnect loop at a time (isReconnecting guard)
+          socket.onclose = () => {
+            if (socket !== ws) return; // already replaced
+            if (!isChatActive) return; // intentional disconnect
+            if (isReconnecting) return; // already retrying
+
+            isReconnecting = true;
+            renderSystemMessage(
+              `Connection lost. Reconnecting in ${reconnectDelay / 1000}s…`,
+            );
+
+            setTimeout(() => {
+              if (!isChatActive) {
+                isReconnecting = false;
+                return;
+              }
+              connectWebSocket()
+                .then(() => {
+                  isReconnecting = false;
+                  renderSystemMessage("Reconnected ✓");
+                })
+                .catch(() => {
+                  // exponential back-off, cap at 30 s
+                  reconnectDelay = Math.min(reconnectDelay * 2, 30_000);
+                  isReconnecting = false;
+                  if (isChatActive) socket.onclose(); // retry
+                });
+            }, reconnectDelay);
+          };
+
+          socket.onerror = () => {
+            if (socket === ws) reject(new Error("WebSocket connection failed"));
+          };
         });
       }
 
-      // --- EVENT LISTENERS ---
+      // ── Send helper ───────────────────────────────────────────────
+      function wsSend(data) {
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify(data));
+        }
+      }
 
-      // Login Submit
+      // ═══════════════════════════════════════════════════════════
+      //  WebRTC VOICE CALLS
+      // ═══════════════════════════════════════════════════════════
+      const STUN_SERVERS = {
+        iceServers: [
+          { urls: "stun:stun.l.google.com:19302" },
+          { urls: "stun:stun1.l.google.com:19302" },
+          { urls: "stun:stun.cloudflare.com:3478" },
+        ],
+      };
+
+      const callState = {
+        active: false,
+        peer: null,
+        pc: null,
+        stream: null,
+        timerID: null,
+        connectTimeoutID: null,
+        seconds: 0,
+        muted: false,
+        isInitiator: false,
+        // ICE candidates that arrive before setRemoteDescription is called
+        // must be buffered — applying them before remote desc throws an error
+        // that browsers silently swallow, causing the connection to never form.
+        pendingIce: [],
+        remoteDescSet: false,
+      };
+
+      const callOverlay = document.getElementById("call-overlay");
+      const callAvatar = document.getElementById("call-avatar");
+      const callCardLabel = document.getElementById("call-card-label");
+      const callCardName = document.getElementById("call-card-name");
+      const callCardActions = document.getElementById("call-card-actions");
+      const activeCallBar = document.getElementById("active-call-bar");
+      const callPeerName = document.getElementById("call-peer-name");
+      const callTimerEl = document.getElementById("call-timer");
+      const btnMute = document.getElementById("btn-mute");
+      const remoteAudio = document.getElementById("remote-audio");
+
+      function getCallablePeer() {
+        const others = [...onlineUsers.entries()].filter(
+          ([u, v]) => u !== currentUser && v.online,
+        );
+        return others.length === 1 ? others[0][0] : null;
+      }
+
+      function refreshCallButton() {
+        const btnCall = document.getElementById("btn-call");
+        if (!btnCall) return;
+        const peer = getCallablePeer();
+        if (callState.active) {
+          btnCall.classList.remove("call-btn-disabled");
+          btnCall.classList.add("call-btn-active");
+          btnCall.title = "In call";
+        } else if (peer) {
+          btnCall.classList.remove("call-btn-disabled", "call-btn-active");
+          btnCall.title = `Call @${peer}`;
+        } else {
+          btnCall.classList.add("call-btn-disabled");
+          btnCall.classList.remove("call-btn-active");
+          btnCall.title = "Need exactly 1 other online user to call";
+        }
+      }
+
+      // ── Overlay helpers ──────────────────────────────────────────
+      function showCallOverlay(label, name, actions) {
+        callCardLabel.textContent = label;
+        callCardName.textContent = name ? "@" + name : "";
+        callCardActions.innerHTML = "";
+        actions.forEach(({ text, cls, fn }) => {
+          const b = document.createElement("button");
+          b.className = cls;
+          b.textContent = text;
+          b.onclick = fn;
+          callCardActions.appendChild(b);
+        });
+        callOverlay.classList.add("visible");
+      }
+      function setOverlayStatus(label) {
+        callCardLabel.textContent = label;
+      }
+      function hideCallOverlay() {
+        callOverlay.classList.remove("visible");
+      }
+
+      // ── Initiator flow ───────────────────────────────────────────
+      async function initiateCall() {
+        if (callState.active || callState.peer) return;
+
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          renderSystemMessage(
+            "⚠️ Your browser doesn't support voice calls (requires HTTPS or localhost).",
+          );
+          return;
+        }
+        const peer = getCallablePeer();
+        if (!peer) {
+          renderSystemMessage(
+            "⚠️ Need exactly 1 other online user to start a call.",
+          );
+          return;
+        }
+
+        callState.peer = peer;
+        callState.isInitiator = true;
+
+        // Show overlay immediately — keep it visible through entire setup
+        showCallOverlay("Requesting microphone…", peer, [
+          { text: "📵", cls: "btn-call-decline", fn: cancelOutgoingCall },
+        ]);
+
+        // Get mic before we notify the other side so we're fully ready
+        try {
+          callState.stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: false,
+          });
+        } catch (err) {
+          renderSystemMessage(`⚠️ Microphone error: ${err.message}`);
+          callState.peer = null;
+          callState.isInitiator = false;
+          hideCallOverlay();
+          return;
+        }
+
+        // Guard: user may have cancelled during the getUserMedia dialog
+        if (!callState.peer) {
+          stopStream();
+          return;
+        }
+
+        setOverlayStatus("Calling…");
+        wsSend({ type: "call_request", target: peer });
+        renderSystemMessage(`📞 Calling @${peer}…`);
+      }
+
+      function cancelOutgoingCall() {
+        const peer = callState.peer;
+        callState.peer = null;
+        callState.isInitiator = false;
+        stopStream();
+        hideCallOverlay();
+        if (peer) {
+          wsSend({ type: "call_ended", target: peer });
+          renderSystemMessage("📵 Call cancelled.");
+        }
+      }
+
+      // ── Callee flow ──────────────────────────────────────────────
+      function showIncomingCall(from) {
+        // Don't show if we're already in a call
+        if (callState.active || (callState.peer && callState.peer !== from)) {
+          wsSend({ type: "call_declined", target: from });
+          return;
+        }
+        callState.peer = from;
+        showCallOverlay("Incoming Call", from, [
+          { text: "📞", cls: "btn-call-accept", fn: () => acceptCall(from) },
+          { text: "📵", cls: "btn-call-decline", fn: () => declineCall(from) },
+        ]);
+        renderSystemMessage(`📞 Incoming call from @${from}`);
+      }
+
+      async function acceptCall(from) {
+        if (!callState.peer) return; // already cancelled or timed out
+        setOverlayStatus("Requesting microphone…");
+        // Disable buttons so they can't be double-clicked
+        callCardActions
+          .querySelectorAll("button")
+          .forEach((b) => (b.disabled = true));
+
+        try {
+          callState.stream = await navigator.mediaDevices.getUserMedia({
+            audio: true,
+            video: false,
+          });
+        } catch (err) {
+          renderSystemMessage(`⚠️ Microphone error: ${err.message}`);
+          wsSend({ type: "call_declined", target: from });
+          callState.peer = null;
+          hideCallOverlay();
+          return;
+        }
+
+        if (!callState.peer) {
+          stopStream();
+          hideCallOverlay();
+          return;
+        }
+
+        setOverlayStatus("Connecting…");
+        // Create PC BEFORE sending call_accepted so it's ready when offer arrives
+        setupPeerConnection(false);
+        wsSend({ type: "call_accepted", target: from });
+      }
+
+      function declineCall(from) {
+        wsSend({ type: "call_declined", target: from });
+        callState.peer = null;
+        hideCallOverlay();
+        renderSystemMessage(`You declined the call from @${from}.`);
+      }
+
+      // ── Initiator receives "accepted" ────────────────────────────
+      function onCallAccepted(from) {
+        // Don't hide overlay — update the status label in-place
+        setOverlayStatus("Connecting…");
+        // Mic was already acquired in initiateCall; just set up the PC
+        callState.peer = from;
+        setupPeerConnection(true); // caller creates & sends offer
+      }
+
+      function onCallDeclined(from) {
+        stopStream();
+        hideCallOverlay();
+        callState.peer = null;
+        callState.isInitiator = false;
+        renderSystemMessage(`@${from} declined the call.`);
+      }
+
+      function stopStream() {
+        if (callState.stream) {
+          callState.stream.getTracks().forEach((t) => t.stop());
+          callState.stream = null;
+        }
+      }
+
+      // ── ICE candidate buffering ──────────────────────────────────
+      // Preserve any candidates that arrived before the PC was created
+      // (can happen if the remote's ICE gathers faster than our async setup).
+      function bufferOrAddIce(candidate) {
+        if (!callState.pc) {
+          callState.pendingIce.push(candidate);
+          return;
+        }
+        if (callState.remoteDescSet) {
+          callState.pc
+            .addIceCandidate(new RTCIceCandidate(candidate))
+            .catch(() => {});
+        } else {
+          callState.pendingIce.push(candidate);
+        }
+      }
+
+      async function drainPendingIce() {
+        callState.remoteDescSet = true;
+        const queue = callState.pendingIce.splice(0); // drain without resetting the array ref
+        for (const c of queue) {
+          try {
+            await callState.pc.addIceCandidate(new RTCIceCandidate(c));
+          } catch (_) {}
+        }
+      }
+
+      // ── Core peer connection ─────────────────────────────────────
+      function setupPeerConnection(createOffer) {
+        const pc = new RTCPeerConnection(STUN_SERVERS);
+        // NOTE: do NOT reset pendingIce here — candidates may have arrived
+        // while getUserMedia was running (e.g. from the remote peer's faster setup)
+        callState.pc = pc;
+        callState.remoteDescSet = false;
+
+        if (callState.stream) {
+          callState.stream
+            .getTracks()
+            .forEach((t) => pc.addTrack(t, callState.stream));
+        }
+
+        pc.ontrack = (e) => {
+          remoteAudio.srcObject = e.streams[0];
+        };
+
+        pc.onicecandidate = (e) => {
+          // null candidate = gathering complete; don't send
+          if (e.candidate && callState.peer) {
+            wsSend({
+              type: "webrtc_ice",
+              target: callState.peer,
+              payload: e.candidate,
+            });
+          }
+        };
+
+        // Use iceConnectionState — most reliable across browsers
+        pc.oniceconnectionstatechange = () => {
+          const s = pc.iceConnectionState;
+          console.log("[call] iceConnectionState →", s);
+          if ((s === "connected" || s === "completed") && !callState.active) {
+            clearTimeout(callState.connectTimeoutID);
+            startActiveCall();
+          } else if (s === "failed") {
+            renderSystemMessage("⚠️ Call failed (ICE). Try again.");
+            endCall(true);
+          }
+        };
+
+        pc.onconnectionstatechange = () => {
+          const s = pc.connectionState;
+          console.log("[call] connectionState →", s);
+          if (s === "connected" && !callState.active) {
+            clearTimeout(callState.connectTimeoutID);
+            startActiveCall();
+          } else if (s === "failed") {
+            endCall(true);
+          }
+        };
+
+        // 25-second connection timeout
+        callState.connectTimeoutID = setTimeout(() => {
+          if (!callState.active && callState.pc === pc) {
+            renderSystemMessage(
+              "⚠️ Call timed out. Could not reach the other side.",
+            );
+            endCall(true);
+          }
+        }, 25000);
+
+        if (createOffer) {
+          pc.createOffer({ offerToReceiveAudio: true })
+            .then((offer) => pc.setLocalDescription(offer))
+            .then(() => {
+              if (!callState.peer) {
+                endCall(true);
+                return;
+              }
+              wsSend({
+                type: "webrtc_offer",
+                target: callState.peer,
+                payload: pc.localDescription,
+              });
+            })
+            .catch((err) => {
+              renderSystemMessage(`⚠️ Could not create offer: ${err.message}`);
+              endCall(true);
+            });
+        }
+      }
+
+      async function handleWebRTCOffer(from, offer) {
+        if (!callState.pc) {
+          console.warn("[call] Offer arrived but no PC exists");
+          return;
+        }
+        try {
+          await callState.pc.setRemoteDescription(
+            new RTCSessionDescription(offer),
+          );
+          await drainPendingIce();
+          const answer = await callState.pc.createAnswer();
+          await callState.pc.setLocalDescription(answer);
+          wsSend({
+            type: "webrtc_answer",
+            target: from,
+            payload: callState.pc.localDescription,
+          });
+        } catch (err) {
+          renderSystemMessage(`⚠️ WebRTC handshake error: ${err.message}`);
+          endCall(true);
+        }
+      }
+
+      async function handleWebRTCAnswer(answer) {
+        if (!callState.pc) return;
+        try {
+          await callState.pc.setRemoteDescription(
+            new RTCSessionDescription(answer),
+          );
+          await drainPendingIce();
+        } catch (err) {
+          renderSystemMessage(`⚠️ Could not apply answer: ${err.message}`);
+          endCall(true);
+        }
+      }
+
+      function handleWebRTCIce(candidate) {
+        bufferOrAddIce(candidate);
+      }
+
+      // ── Active call ──────────────────────────────────────────────
+      function startActiveCall() {
+        if (callState.active) return; // guard duplicate fires
+        callState.active = true;
+        callState.seconds = 0;
+        callPeerName.textContent = callState.peer;
+        activeCallBar.classList.add("visible");
+        hideCallOverlay();
+        refreshCallButton();
+        callState.timerID = setInterval(() => {
+          callState.seconds++;
+          const m = String(Math.floor(callState.seconds / 60)).padStart(2, "0");
+          const s = String(callState.seconds % 60).padStart(2, "0");
+          callTimerEl.textContent = `${m}:${s}`;
+        }, 1000);
+        renderSystemMessage(`📞 Call connected with @${callState.peer}.`);
+      }
+
+      function endCall(remote = false) {
+        if (!remote && callState.peer) {
+          wsSend({ type: "call_ended", target: callState.peer });
+        }
+        clearInterval(callState.timerID);
+        clearTimeout(callState.connectTimeoutID);
+        callState.connectTimeoutID = null;
+        if (callState.pc) {
+          try {
+            callState.pc.close();
+          } catch (_) {}
+          callState.pc = null;
+        }
+        stopStream();
+        remoteAudio.srcObject = null;
+        activeCallBar.classList.remove("visible");
+        hideCallOverlay();
+        const peer = callState.peer;
+        callState.active = false;
+        callState.muted = false;
+        callState.isInitiator = false;
+        callState.peer = null;
+        callState.seconds = 0;
+        callState.pendingIce = [];
+        callState.remoteDescSet = false;
+        refreshCallButton();
+        if (peer) renderSystemMessage(`📵 Call ended.`);
+      }
+
+      btnMute.addEventListener("click", () => {
+        if (!callState.stream) return;
+        callState.muted = !callState.muted;
+        callState.stream.getAudioTracks().forEach((t) => {
+          t.enabled = !callState.muted;
+        });
+        btnMute.textContent = callState.muted ? "🔇 Unmute" : "🎤 Mute";
+      });
+
+      // ═══════════════════════════════════════════════════════════
+      //  FILE & PHOTO SENDING
+      // ═══════════════════════════════════════════════════════════
+
+      const fileInput       = document.getElementById("file-input");
+      const btnAttach       = document.getElementById("btn-attach");
+      const filePreviewBar  = document.getElementById("file-preview-bar");
+      const lightbox        = document.getElementById("lightbox");
+      const lightboxImg     = document.getElementById("lightbox-img");
+      const lightboxClose   = document.getElementById("lightbox-close");
+
+      // Staged file waiting to be sent
+      const stagedFile = { file: null, dataURL: null };
+
+      /** Format bytes → human-readable string */
+      function formatBytes(bytes) {
+        if (bytes < 1024)       return bytes + " B";
+        if (bytes < 1024*1024)  return (bytes / 1024).toFixed(1) + " KB";
+        return (bytes / (1024*1024)).toFixed(1) + " MB";
+      }
+
+      /** Pick a representative emoji icon for a given MIME type */
+      function fileIcon(mimeType) {
+        if (mimeType.startsWith("image/"))        return "🖼️";
+        if (mimeType === "application/pdf")       return "📄";
+        if (mimeType.startsWith("video/"))        return "🎬";
+        if (mimeType.startsWith("audio/"))        return "🎵";
+        if (mimeType.includes("zip") || mimeType.includes("compressed")) return "📦";
+        if (mimeType.startsWith("text/"))         return "📝";
+        if (mimeType.includes("word") || mimeType.includes("document")) return "📃";
+        if (mimeType.includes("sheet") || mimeType.includes("excel"))   return "📊";
+        return "📎";
+      }
+
+      // ── Attach button → open picker ───────────────────────────
+      btnAttach.addEventListener("click", () => {
+        fileInput.value = ""; // reset so same file can be re-selected
+        fileInput.click();
+      });
+
+      // ── File selected ─────────────────────────────────────────
+      fileInput.addEventListener("change", () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        // 10 MB guard
+        if (file.size > 10 * 1024 * 1024) {
+          renderSystemMessage("⚠️ File too large (max 10 MB).");
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          stagedFile.file   = file;
+          stagedFile.dataURL = e.target.result;
+          showFilePreviewBar(file, e.target.result);
+          btnAttach.classList.add("has-file");
+          messageInput.focus();
+        };
+        reader.readAsDataURL(file);
+      });
+
+      /** Show the preview bar with a thumbnail or icon */
+      function showFilePreviewBar(file, dataURL) {
+        const isImage = file.type.startsWith("image/");
+
+        const thumbHTML = isImage
+          ? `<img class="file-preview-thumb" src="${dataURL}" alt="preview" />`
+          : `<div class="file-preview-icon">${fileIcon(file.type)}</div>`;
+
+        filePreviewBar.innerHTML = `
+          ${thumbHTML}
+          <div class="file-preview-info">
+            <div class="file-preview-name">${escapeHTML(file.name)}</div>
+            <div class="file-preview-size">${formatBytes(file.size)}</div>
+          </div>
+          <button class="file-preview-dismiss" id="file-preview-dismiss" aria-label="Remove attachment">✕</button>
+        `;
+        filePreviewBar.classList.add("visible");
+
+        document.getElementById("file-preview-dismiss").addEventListener("click", clearStagedFile);
+      }
+
+      /** Clear staged file and hide the preview bar */
+      function clearStagedFile() {
+        stagedFile.file   = null;
+        stagedFile.dataURL = null;
+        filePreviewBar.classList.remove("visible");
+        filePreviewBar.innerHTML = "";
+        btnAttach.classList.remove("has-file");
+        fileInput.value = "";
+      }
+
+      // ── Send file ─────────────────────────────────────────────
+      function handleSendFile() {
+        const { file, dataURL } = stagedFile;
+        if (!file || !dataURL) return;
+
+        const payload = {
+          filename: file.name,
+          mimeType: file.type,
+          size:     file.size,
+          dataURL,
+        };
+
+        // Render locally
+        renderFileMessage(currentUser, payload, true);
+
+        // Broadcast over WebSocket
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: "file", ...payload }));
+        }
+
+        clearStagedFile();
+      }
+
+      // ── Receive file ──────────────────────────────────────────
+      function handleReceiveFile(sender, payload) {
+        renderFileMessage(sender, payload, false);
+      }
+
+      // ── Render: image or file card ────────────────────────────
+      function renderFileMessage(sender, payload, isMe) {
+        const { filename, mimeType, dataURL, size } = payload;
+        const isImage = mimeType && mimeType.startsWith("image/");
+
+        const msgDiv = document.createElement("div");
+        msgDiv.className = `msg-wrapper ${isMe ? "sent" : "received"}`;
+
+        let bubbleContent;
+        if (isImage) {
+          // Image bubble — click to open lightbox
+          const imgId = `img-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+          bubbleContent = `
+            <div class="msg-author">${isMe ? "You" : escapeHTML(sender)}</div>
+            <div class="msg-bubble is-media">
+              <img
+                class="msg-image"
+                id="${imgId}"
+                src="${dataURL}"
+                alt="${escapeHTML(filename)}"
+                title="${escapeHTML(filename)}"
+              />
+            </div>
+            <div class="msg-time">${getTimeString()}</div>
+          `;
+          msgDiv.innerHTML = bubbleContent;
+          msgDiv.querySelector(`#${imgId}`).addEventListener("click", () => openLightbox(dataURL));
+        } else {
+          // File card with download link
+          const icon = fileIcon(mimeType);
+          bubbleContent = `
+            <div class="msg-author">${isMe ? "You" : escapeHTML(sender)}</div>
+            <div class="msg-bubble is-file">
+              <a
+                class="msg-file-card"
+                href="${dataURL}"
+                download="${escapeHTML(filename)}"
+                title="Download ${escapeHTML(filename)}"
+              >
+                <span class="msg-file-icon">${icon}</span>
+                <div class="msg-file-details">
+                  <div class="msg-file-name">${escapeHTML(filename)}</div>
+                  <div class="msg-file-size">${formatBytes(size)}</div>
+                </div>
+                <span class="msg-file-dl">⬇️</span>
+              </a>
+            </div>
+            <div class="msg-time">${getTimeString()}</div>
+          `;
+          msgDiv.innerHTML = bubbleContent;
+        }
+
+        chatMessages.appendChild(msgDiv);
+        scrollToBottom();
+      }
+
+      // ── Lightbox ──────────────────────────────────────────────
+      function openLightbox(src) {
+        lightboxImg.src = src;
+        lightbox.classList.add("visible");
+      }
+      function closeLightbox() {
+        lightbox.classList.remove("visible");
+        // Clear src after transition to free memory
+        setTimeout(() => { lightboxImg.src = ""; }, 300);
+      }
+      lightbox.addEventListener("click", (e) => {
+        if (e.target === lightbox) closeLightbox();
+      });
+      lightboxClose.addEventListener("click", closeLightbox);
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && lightbox.classList.contains("visible")) closeLightbox();
+      });
+
+      // ═══════════════════════════════════════════════════════════
+      //  EVENT LISTENERS
+      // ═══════════════════════════════════════════════════════════
+
+      // Login
       loginForm.addEventListener("submit", async function (e) {
         e.preventDefault();
 
@@ -1529,11 +3591,9 @@
         currentChannel = document.getElementById("channel").value.trim();
         currentPassword = document.getElementById("password").value;
 
-        // Update UI text
         document.getElementById("display-channel").innerText = currentChannel;
         document.getElementById("display-user").innerText = `@${currentUser}`;
 
-        // Connect to the server first
         try {
           await connectWebSocket();
         } catch (err) {
@@ -1543,44 +3603,52 @@
           return;
         }
 
-        // Switch Screens
         loginScreen.classList.add("hidden");
         setTimeout(() => {
           chatScreen.classList.remove("hidden");
           isChatActive = true;
           messageInput.focus();
-
-          // Clear previous messages
           chatMessages.innerHTML = "";
-
-          // Spawn ambient particles
           spawnParticles();
-
-          // Show date divider and welcome card
           renderDateDivider();
           renderWelcomeCard(currentChannel, currentUser);
-
-          // Add self to presence
           addPresenceUser(currentUser, true);
         }, 400);
       });
 
-      // Chat Submit
+      // Chat form submit — BUG-FIX: isSubmitting flag prevents double-send
+      // if the user somehow triggers submit twice in rapid succession.
       chatForm.addEventListener("submit", function (e) {
         e.preventDefault();
-        const text = messageInput.value.trim();
-        if (!text) return;
+        if (isSubmitting) return;
+        isSubmitting = true;
 
-        handleSendMessage(text);
+        // Send staged file first (if any)
+        if (stagedFile.file) {
+          handleSendFile();
+        }
+
+        // Send text message if there's text in the input
+        const text = messageInput.value.trim();
+        if (text) {
+          handleSendMessage(text);
+        }
+
+        isSubmitting = false;
       });
 
-      // Leave Chat
+      // Leave
       function leaveChat() {
         isChatActive = false;
+        isReconnecting = false;
+        endCall(false); // hang up any in-progress call
 
-        // Close WebSocket (server will broadcast user_left)
         if (ws) {
-          ws.close();
+          ws.onclose = null;
+          ws.onerror = null;
+          try {
+            ws.close();
+          } catch (_) {}
           ws = null;
         }
 
@@ -1588,15 +3656,11 @@
         setTimeout(() => {
           loginScreen.classList.remove("hidden");
           loginForm.reset();
-
-          // Clear presence
-          onlineUsers.forEach((val, key) => removePresenceUser(key));
+          onlineUsers.forEach((_, k) => removePresenceUser(k));
           onlineUsers.clear();
           presenceList.innerHTML = "";
-
-          currentUser = "";
-          currentChannel = "";
-          currentPassword = "";
+          currentUser = currentChannel = currentPassword = "";
+          reconnectDelay = 2000;
         }, 400);
       }
     </script>
