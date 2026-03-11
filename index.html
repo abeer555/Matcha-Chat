@@ -1561,6 +1561,150 @@
       .lightbox-close:hover {
         background: rgba(255,255,255,0.22);
       }
+
+      /* ── Reply Feature ──────────────────────────────────────── */
+
+      /* Hover-triggered reply button on each bubble */
+      .reply-btn {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: var(--glass-bg);
+        backdrop-filter: blur(8px);
+        border: 1px solid var(--glass-border);
+        border-radius: 10px;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 14px;
+        color: var(--text-main);
+        opacity: 0;
+        transition: opacity 0.18s, transform 0.18s, background 0.15s;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        line-height: 1;
+        flex-shrink: 0;
+        z-index: 2;
+      }
+      [data-theme="dark"] .reply-btn {
+        background: rgba(50, 50, 55, 0.95);
+        border-color: rgba(255, 255, 255, 0.12);
+        color: #e0e0e0;
+      }
+      /* Position left for sent, right for received */
+      .sent .reply-btn {
+        right: calc(100% + 8px);
+        transform: translateY(-50%);
+      }
+      .received .reply-btn {
+        left: calc(100% + 8px);
+        transform: translateY(-50%);
+      }
+      .msg-wrapper:hover .reply-btn {
+        opacity: 1;
+      }
+      .reply-btn:hover {
+        background: #fff;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.12);
+      }
+      [data-theme="dark"] .reply-btn:hover {
+        background: rgba(255,255,255,0.18);
+      }
+
+      /* Quoted preview block rendered inside a reply bubble */
+      .msg-reply-quote {
+        border-left: 3px solid var(--accent);
+        border-radius: 6px 6px 0 0;
+        padding: 6px 10px;
+        margin-bottom: 8px;
+        background: rgba(0,0,0,0.04);
+        font-size: 12px;
+        line-height: 1.4;
+        max-width: 100%;
+      }
+      [data-theme="dark"] .msg-reply-quote {
+        background: rgba(255,255,255,0.06);
+      }
+      .msg-reply-quote-author {
+        font-weight: 700;
+        color: var(--accent);
+        margin-bottom: 2px;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+      }
+      .msg-reply-quote-text {
+        color: var(--text-light);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 240px;
+      }
+
+      /* Reply context bar shown above the footer when replying */
+      .reply-context-bar {
+        display: none;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 24px;
+        background: var(--header-bg);
+        backdrop-filter: blur(10px);
+        border-top: 1px solid var(--glass-border);
+        flex-shrink: 0;
+        z-index: 4;
+        animation: fadeIn 0.18s ease-out;
+      }
+      .reply-context-bar.visible {
+        display: flex;
+      }
+      .reply-context-bar-icon {
+        font-size: 16px;
+        flex-shrink: 0;
+        color: var(--accent);
+      }
+      .reply-context-bar-body {
+        flex: 1;
+        min-width: 0;
+      }
+      .reply-context-bar-author {
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--accent);
+        margin-bottom: 1px;
+      }
+      .reply-context-bar-text {
+        font-size: 13px;
+        color: var(--text-light);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .reply-context-bar-dismiss {
+        background: none;
+        border: none;
+        cursor: pointer;
+        border-radius: 8px;
+        padding: 5px;
+        color: var(--text-light);
+        font-size: 18px;
+        transition: background 0.15s, color 0.15s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        line-height: 1;
+      }
+      .reply-context-bar-dismiss:hover {
+        background: rgba(239,83,80,0.1);
+        color: #ef5350;
+      }
+
+      /* Bubble position context for the reply button */
+      .msg-bubble {
+        position: relative;
+      }
     </style>
   </head>
   <body>
@@ -1706,6 +1850,16 @@
       <!-- File pre-send preview bar -->
       <div class="file-preview-bar" id="file-preview-bar">
         <!-- Content injected by JS -->
+      </div>
+
+      <!-- Reply context bar (shown when user clicks ↩ on a message) -->
+      <div class="reply-context-bar" id="reply-context-bar">
+        <span class="reply-context-bar-icon">↩</span>
+        <div class="reply-context-bar-body">
+          <div class="reply-context-bar-author" id="reply-context-author"></div>
+          <div class="reply-context-bar-text" id="reply-context-text"></div>
+        </div>
+        <button class="reply-context-bar-dismiss" id="reply-context-dismiss" title="Cancel reply" aria-label="Cancel reply">✕</button>
       </div>
 
       <main class="chat-main" id="chat-messages">
@@ -1863,6 +2017,9 @@
       let reconnectDelay = 2000; // starts at 2 s, backs off on repeat failures
       let isSubmitting = false; // BUG-FIX: guards against double-send on rapid clicks
 
+      // ── Reply state ───────────────────────────────────────────────
+      let replyingTo = null; // { sender, text } when composing a reply
+
       // presence: username → { online, el }
       const onlineUsers = new Map();
 
@@ -1884,6 +2041,27 @@
           minute: "2-digit",
         });
       }
+
+      // ── Reply helpers ─────────────────────────────────────────────
+      const replyContextBar     = document.getElementById("reply-context-bar");
+      const replyContextAuthor  = document.getElementById("reply-context-author");
+      const replyContextText    = document.getElementById("reply-context-text");
+      const replyContextDismiss = document.getElementById("reply-context-dismiss");
+
+      function startReply(sender, text) {
+        replyingTo = { sender, text };
+        replyContextAuthor.textContent = `Replying to ${sender === currentUser ? "yourself" : sender}`;
+        replyContextText.textContent = text;
+        replyContextBar.classList.add("visible");
+        messageInput.focus();
+      }
+
+      function cancelReply() {
+        replyingTo = null;
+        replyContextBar.classList.remove("visible");
+      }
+
+      replyContextDismiss.addEventListener("click", cancelReply);
 
       // ── Theme ────────────────────────────────────────────────────
       const themeToggle = document.getElementById("theme-toggle");
@@ -2761,7 +2939,7 @@
       // ═══════════════════════════════════════════════════════════
       //  CHAT RENDER
       // ═══════════════════════════════════════════════════════════
-      function renderMessage(sender, text, isMe) {
+      function renderMessage(sender, text, isMe, replyTo = null) {
         const msgDiv = document.createElement("div");
         msgDiv.className = `msg-wrapper ${isMe ? "sent" : "received"}`;
         // Detect pure-emoji messages → render larger
@@ -2772,10 +2950,30 @@
         const bubbleStyle = isPureEmoji
           ? ' style="font-size:28px;background:transparent;box-shadow:none;padding:4px 8px;"'
           : "";
+
+        // Build optional reply-quote block
+        const replyQuoteHTML = replyTo
+          ? `<div class="msg-reply-quote">
+               <div class="msg-reply-quote-author">${escapeHTML(replyTo.sender)}</div>
+               <div class="msg-reply-quote-text">${escapeHTML(replyTo.text)}</div>
+             </div>`
+          : "";
+
         msgDiv.innerHTML = `
           <div class="msg-author">${isMe ? "You" : escapeHTML(sender)}</div>
-          <div class="msg-bubble"${bubbleStyle}>${escapeHTML(text)}</div>
+          <div class="msg-bubble"${bubbleStyle}>
+            ${replyQuoteHTML}
+            ${escapeHTML(text)}
+          </div>
+          <button class="reply-btn" title="Reply" aria-label="Reply to this message">↩</button>
           <div class="msg-time">${getTimeString()}</div>`;
+
+        // Wire the reply button
+        msgDiv.querySelector(".reply-btn").addEventListener("click", (e) => {
+          e.stopPropagation();
+          startReply(sender, text);
+        });
+
         chatMessages.appendChild(msgDiv);
         scrollToBottom();
       }
@@ -2809,15 +3007,17 @@
 
       // ── Send message ──────────────────────────────────────────────
       function handleSendMessage(text) {
-        renderMessage(currentUser, text, true);
+        const reply = replyingTo; // capture before clearing
+        renderMessage(currentUser, text, true, reply);
         if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ type: "chat", text }));
+          ws.send(JSON.stringify({ type: "chat", text, replyTo: reply || undefined }));
         }
         messageInput.value = "";
         messageInput.classList.remove("has-text");
+        cancelReply();
       }
-      function handleReceiveMessage(sender, text) {
-        renderMessage(sender, text, false);
+      function handleReceiveMessage(sender, text, replyTo = null) {
+        renderMessage(sender, text, false, replyTo);
       }
 
       // ═══════════════════════════════════════════════════════════
@@ -2869,7 +3069,7 @@
                   handleUserLeft(data.username);
                   break;
                 case "chat":
-                  handleReceiveMessage(data.username, data.text);
+                  handleReceiveMessage(data.username, data.text, data.replyTo || null);
                   break;
                 // ── File / photo ──
                 case "file":
@@ -3036,27 +3236,6 @@
       }
 
       // ── Initiator flow ───────────────────────────────────────────
-      /** Map a getUserMedia error to a friendly message */
-      function friendlyMicError(err) {
-        const name = err.name || "";
-        const msg  = (err.message || "").toLowerCase();
-        if (name === "NotFoundError" || name === "DevicesNotFoundError" ||
-            msg.includes("not found") || msg.includes("could not be found") ||
-            msg.includes("object can not be found")) {
-          return "No microphone found. Please connect a microphone and try again.";
-        }
-        if (name === "NotAllowedError" || name === "PermissionDeniedError") {
-          return "Microphone access was denied. Please allow microphone permission in your browser settings.";
-        }
-        if (name === "NotReadableError" || name === "TrackStartError") {
-          return "Microphone is in use by another app. Please close other apps using the mic and try again.";
-        }
-        if (name === "OverconstrainedError") {
-          return "No microphone satisfies the required constraints.";
-        }
-        return err.message || "Unknown microphone error.";
-      }
-
       async function initiateCall() {
         if (callState.active || callState.peer) return;
 
@@ -3089,7 +3268,7 @@
             video: false,
           });
         } catch (err) {
-          renderSystemMessage(`⚠️ Microphone error: ${friendlyMicError(err)}`);
+          renderSystemMessage(`⚠️ Microphone error: ${err.message}`);
           callState.peer = null;
           callState.isInitiator = false;
           hideCallOverlay();
@@ -3148,7 +3327,7 @@
             video: false,
           });
         } catch (err) {
-          renderSystemMessage(`⚠️ Microphone error: ${friendlyMicError(err)}`);
+          renderSystemMessage(`⚠️ Microphone error: ${err.message}`);
           wsSend({ type: "call_declined", target: from });
           callState.peer = null;
           hideCallOverlay();
@@ -3499,9 +3678,7 @@
       }
 
       // ── Send file ─────────────────────────────────────────────
-      // Files are uploaded via HTTP POST to /upload instead of WebSocket
-      // to avoid WebSocket proxy payload size limits on Render/nginx.
-      async function handleSendFile() {
+      function handleSendFile() {
         const { file, dataURL } = stagedFile;
         if (!file || !dataURL) return;
 
@@ -3512,31 +3689,15 @@
           dataURL,
         };
 
-        // Render locally immediately so the sender sees it right away
+        // Render locally
         renderFileMessage(currentUser, payload, true);
 
-        // Clear stage before async send so the user can attach another file
-        clearStagedFile();
-
-        // Upload via HTTP POST — avoids WebSocket message-size limits on Render
-        try {
-          const res = await fetch("/upload", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              channel:  currentChannel,
-              password: currentPassword,
-              username: currentUser,
-              ...payload,
-            }),
-          });
-          if (!res.ok) {
-            const err = await res.json().catch(() => ({}));
-            renderSystemMessage(`⚠️ File send failed: ${err.error || res.status}`);
-          }
-        } catch (err) {
-          renderSystemMessage(`⚠️ File send failed: ${err.message}`);
+        // Broadcast over WebSocket
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: "file", ...payload }));
         }
+
+        clearStagedFile();
       }
 
       // ── Receive file ──────────────────────────────────────────
