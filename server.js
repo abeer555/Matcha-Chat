@@ -152,6 +152,12 @@ wss.on("connection", (ws, req) => {
         return;
       }
 
+      // Typing indicators: relay to everyone else in the room
+      if (msg.type === "typing_start" || msg.type === "typing_stop") {
+        broadcast(roomKey, { type: msg.type, username }, ws);
+        return;
+      }
+
       // File / photo: broadcast to everyone else in the room
       if (msg.type === "file") {
         broadcast(
@@ -203,10 +209,11 @@ wss.on("connection", (ws, req) => {
 
     room.delete(ws);
 
-    // Only remove from usernameMap if this ws is still the current entry
-    // (a reconnect by the same username may have replaced it already)
+    // Only remove from usernameMap if this ws is still the current entry.
+    // If a reconnect already replaced it, umap points to the new socket — leave it alone.
     const umap = usernameMap.get(roomKey);
-    if (umap && umap.get(username) === ws) umap.delete(username);
+    const wasCurrentConnection = umap && umap.get(username) === ws;
+    if (wasCurrentConnection) umap.delete(username);
 
     console.log(
       `[-] ${username} left #${channel} (room ${roomKey.slice(0, 8)}…) — ${room.size} user(s)`,
@@ -218,7 +225,9 @@ wss.on("connection", (ws, req) => {
       console.log(
         `[x] Room #${channel} (${roomKey.slice(0, 8)}…) destroyed — zero users`,
       );
-    } else {
+    } else if (wasCurrentConnection) {
+      // Only announce the departure if this was the live connection —
+      // not a ghost being evicted to make way for a reconnect.
       broadcast(roomKey, { type: "user_left", username });
     }
   }

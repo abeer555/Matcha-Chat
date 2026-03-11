@@ -1705,6 +1705,156 @@
       .msg-bubble {
         position: relative;
       }
+
+      /* ── Background Picker ───────────────────────────────────── */
+      .bg-picker-panel {
+        position: absolute;
+        top: calc(100% + 10px);
+        right: 0;
+        background: var(--emoji-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 16px;
+        width: 260px;
+        box-shadow: 0 16px 56px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.06);
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(8px) scale(0.96);
+        transition: all 0.22s var(--ease-out);
+        z-index: 200;
+      }
+      .bg-picker-panel.open {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0) scale(1);
+      }
+      .bg-picker-label {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--text-light);
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        margin-bottom: 10px;
+      }
+      .bg-swatch-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 7px;
+        margin-bottom: 12px;
+      }
+      .bg-swatch {
+        width: 100%;
+        aspect-ratio: 1;
+        border-radius: 10px;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition: transform 0.15s, border-color 0.15s;
+        position: relative;
+      }
+      .bg-swatch:hover {
+        transform: scale(1.1);
+      }
+      .bg-swatch.active {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px var(--accent-shadow);
+      }
+      .bg-swatch-check {
+        position: absolute;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        color: #fff;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        border-radius: 8px;
+        background: rgba(0,0,0,0.18);
+      }
+      .bg-swatch.active .bg-swatch-check {
+        display: flex;
+      }
+      .bg-picker-divider {
+        height: 1px;
+        background: var(--glass-border);
+        margin: 10px 0;
+      }
+      .bg-custom-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .bg-custom-label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-main);
+        flex: 1;
+      }
+      .bg-custom-input {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        border: 2px solid var(--glass-border);
+        cursor: pointer;
+        padding: 2px;
+        background: var(--input-bg);
+        transition: border-color 0.2s;
+      }
+      .bg-custom-input:hover {
+        border-color: var(--accent);
+      }
+      /* Wrapper to position the panel relative to the icon btn */
+      .bg-picker-wrap {
+        position: relative;
+      }
+
+      /* ── Typing Indicator ────────────────────────────────────── */
+      .typing-indicator-row {
+        position: sticky;
+        bottom: 0;
+        left: 0;
+        padding: 4px 8px 2px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        z-index: 2;
+        min-height: 28px;
+        pointer-events: none;
+      }
+      .typing-bubble {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: var(--message-recv);
+        border-radius: 14px;
+        padding: 7px 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        animation: fadeIn 0.2s ease-out;
+      }
+      .typing-text {
+        font-size: 12px;
+        color: var(--text-light);
+        font-weight: 600;
+      }
+      .typing-dots {
+        display: flex;
+        gap: 3px;
+        align-items: center;
+      }
+      .typing-dots span {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--text-light);
+        animation: typingBounce 1.2s ease-in-out infinite;
+      }
+      .typing-dots span:nth-child(2) { animation-delay: 0.18s; }
+      .typing-dots span:nth-child(3) { animation-delay: 0.36s; }
+      @keyframes typingBounce {
+        0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
+        30% { transform: translateY(-4px); opacity: 1; }
+      }
     </style>
   </head>
   <body>
@@ -1799,6 +1949,23 @@
             <span class="icon-sun">☀️</span>
             <span class="icon-moon">🌙</span>
           </button>
+
+          <!-- Background picker -->
+          <div class="bg-picker-wrap">
+            <button class="btn-icon" id="btn-bg-picker" title="Customise background">
+              <svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.06-.92-.1-1.36-.24.25-.56.36-.9.36a1.5 1.5 0 0 1-1.5-1.5v-2a1.5 1.5 0 0 0-1.5-1.5h-2a1.5 1.5 0 0 1-1.5-1.5c0-.34.11-.66.36-.9C13.08 3.06 12.54 3 12 3zm-3.5 9a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm0 4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm4-6.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm4 2.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/></svg>
+            </button>
+            <div class="bg-picker-panel" id="bg-picker-panel">
+              <div class="bg-picker-label">Chat Background</div>
+              <div class="bg-swatch-grid" id="bg-swatch-grid"><!-- injected by JS --></div>
+              <div class="bg-picker-divider"></div>
+              <div class="bg-custom-row">
+                <span class="bg-custom-label">Custom colour</span>
+                <input type="color" class="bg-custom-input" id="bg-custom-input" value="#f1f5f2" title="Pick a custom background colour">
+              </div>
+            </div>
+          </div>
+
           <button
             class="btn-icon call-btn-disabled"
             id="btn-call"
@@ -1864,6 +2031,8 @@
 
       <main class="chat-main" id="chat-messages">
         <!-- Messages inject here -->
+        <!-- Typing indicator (sticky bottom) -->
+        <div class="typing-indicator-row" id="typing-indicator-row"></div>
       </main>
 
       <footer class="chat-footer">
@@ -3015,9 +3184,13 @@
         messageInput.value = "";
         messageInput.classList.remove("has-text");
         cancelReply();
+        clearTypingOnSend();
       }
       function handleReceiveMessage(sender, text, replyTo = null) {
+        // If sender was in typing set, remove them now that the message arrived
+        if (typingUsers.delete(sender)) renderTypingIndicator();
         renderMessage(sender, text, false, replyTo);
+        showNotification(sender, text);
       }
 
       // ═══════════════════════════════════════════════════════════
@@ -3067,9 +3240,21 @@
                   break;
                 case "user_left":
                   handleUserLeft(data.username);
+                  // Remove from typing set if they disconnect mid-type
+                  typingUsers.delete(data.username);
+                  renderTypingIndicator();
                   break;
                 case "chat":
                   handleReceiveMessage(data.username, data.text, data.replyTo || null);
+                  break;
+                // ── Typing indicators ──
+                case "typing_start":
+                  typingUsers.add(data.username);
+                  renderTypingIndicator();
+                  break;
+                case "typing_stop":
+                  typingUsers.delete(data.username);
+                  renderTypingIndicator();
                   break;
                 // ── File / photo ──
                 case "file":
@@ -3588,7 +3773,171 @@
       //  FILE & PHOTO SENDING
       // ═══════════════════════════════════════════════════════════
 
+      // ═══════════════════════════════════════════════════════════
+      //  BACKGROUND PICKER
+      // ═══════════════════════════════════════════════════════════
+      const BG_PRESETS = [
+        { label: "Default",    value: "" },
+        { label: "Sage",       value: "linear-gradient(135deg,#e8f5e9 0%,#f1f8e9 100%)" },
+        { label: "Peach",      value: "linear-gradient(135deg,#fff3e0 0%,#fce4ec 100%)" },
+        { label: "Ocean",      value: "linear-gradient(135deg,#e3f2fd 0%,#e8eaf6 100%)" },
+        { label: "Rose",       value: "linear-gradient(135deg,#fce4ec 0%,#f8bbd9 100%)" },
+        { label: "Lavender",   value: "linear-gradient(135deg,#ede7f6 0%,#e8eaf6 100%)" },
+        { label: "Mint",       value: "linear-gradient(135deg,#e0f2f1 0%,#b2dfdb 100%)" },
+        { label: "Sunset",     value: "linear-gradient(135deg,#ff9a9e 0%,#fecfef 50%,#fecfef 100%)" },
+        { label: "Nordic",     value: "linear-gradient(135deg,#2d3561 0%,#a16bfe 100%)" },
+        { label: "Midnight",   value: "linear-gradient(135deg,#0f0c29 0%,#302b63 50%,#24243e 100%)" },
+        { label: "Forest",     value: "linear-gradient(135deg,#134e5e 0%,#71b280 100%)" },
+        { label: "Pure White", value: "#ffffff" },
+      ];
+
+      const bgPickerPanel  = document.getElementById("bg-picker-panel");
+      const bgPickerBtn    = document.getElementById("btn-bg-picker");
+      const bgSwatchGrid   = document.getElementById("bg-swatch-grid");
+      const bgCustomInput  = document.getElementById("bg-custom-input");
+      const chatMessagesEl = document.getElementById("chat-messages");
+
+      let activeBgValue = localStorage.getItem("matcha-bg") || "";
+
+      function applyBackground(value, fromSwatch = false) {
+        activeBgValue = value;
+        if (value === "") {
+          chatMessagesEl.style.removeProperty("background");
+          chatMessagesEl.style.removeProperty("background-color");
+        } else if (value.startsWith("#")) {
+          chatMessagesEl.style.background = value;
+        } else {
+          chatMessagesEl.style.background = value;
+        }
+        localStorage.setItem("matcha-bg", value);
+        // Update swatch active states
+        bgSwatchGrid.querySelectorAll(".bg-swatch").forEach((el) => {
+          el.classList.toggle("active", el.dataset.value === value);
+        });
+        if (!fromSwatch && !value.startsWith("linear")) {
+          bgCustomInput.value = value || "#f1f5f2";
+        }
+      }
+
+      // Build swatch grid
+      BG_PRESETS.forEach(({ label, value }) => {
+        const swatch = document.createElement("button");
+        swatch.type = "button";
+        swatch.className = "bg-swatch" + (activeBgValue === value ? " active" : "");
+        swatch.title = label;
+        swatch.dataset.value = value;
+        const bg = value || "linear-gradient(135deg,#f1f5f2 0%,#e8f0ea 100%)";
+        swatch.style.background = bg;
+        swatch.innerHTML = `<span class="bg-swatch-check">✓</span>`;
+        swatch.addEventListener("click", () => {
+          applyBackground(value, true);
+        });
+        bgSwatchGrid.appendChild(swatch);
+      });
+
+      // Custom colour input
+      bgCustomInput.addEventListener("input", function () {
+        applyBackground(this.value);
+      });
+
+      // Toggle picker panel open/close
+      bgPickerBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        bgPickerPanel.classList.toggle("open");
+      });
+      document.addEventListener("click", (e) => {
+        if (!bgPickerPanel.contains(e.target) && e.target !== bgPickerBtn) {
+          bgPickerPanel.classList.remove("open");
+        }
+      });
+
+      // Restore persisted BG on load
+      if (activeBgValue) applyBackground(activeBgValue);
+
+      // ═══════════════════════════════════════════════════════════
+      //  TYPING INDICATORS
+      // ═══════════════════════════════════════════════════════════
+      const typingIndicatorRow = document.getElementById("typing-indicator-row");
+      const typingUsers = new Set(); // users currently typing
+      let typingStopTimer = null;
+
+      function renderTypingIndicator() {
+        typingIndicatorRow.innerHTML = "";
+        if (typingUsers.size === 0) return;
+
+        const names = [...typingUsers];
+        let label;
+        if (names.length === 1)      label = `${names[0]} is typing`;
+        else if (names.length === 2) label = `${names[0]} and ${names[1]} are typing`;
+        else                         label = `${names.slice(0,-1).join(", ")} and ${names.at(-1)} are typing`;
+
+        const bubble = document.createElement("div");
+        bubble.className = "typing-bubble";
+        bubble.innerHTML = `
+          <div class="typing-dots"><span></span><span></span><span></span></div>
+          <span class="typing-text">${escapeHTML(label)}…</span>`;
+        typingIndicatorRow.appendChild(bubble);
+        // Keep indicator pinned at bottom without scroll-jacking messages
+        typingIndicatorRow.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      }
+
+      // Send typing events when the local user types
+      let typingSent = false;
+      messageInput.addEventListener("input", function () {
+        if (!isChatActive) return;
+        if (!typingSent && this.value.trim().length > 0) {
+          typingSent = true;
+          wsSend({ type: "typing_start" });
+        }
+        clearTimeout(typingStopTimer);
+        typingStopTimer = setTimeout(() => {
+          typingSent = false;
+          wsSend({ type: "typing_stop" });
+        }, 1500);
+      });
+
+      // Clear typing state on send
+      function clearTypingOnSend() {
+        clearTimeout(typingStopTimer);
+        if (typingSent) {
+          wsSend({ type: "typing_stop" });
+          typingSent = false;
+        }
+      }
+
+      // ═══════════════════════════════════════════════════════════
+      //  BROWSER NOTIFICATIONS
+      // ═══════════════════════════════════════════════════════════
+      let notifPermission = Notification.permission;
+
+      function requestNotifPermission() {
+        if (Notification.permission === "default") {
+          Notification.requestPermission().then((p) => {
+            notifPermission = p;
+          });
+        } else {
+          notifPermission = Notification.permission;
+        }
+      }
+
+      function showNotification(sender, text) {
+        if (notifPermission !== "granted") return;
+        if (!document.hidden) return; // tab is focused — don't notify
+        const n = new Notification(`${sender} in #${currentChannel}`, {
+          body: text.length > 80 ? text.slice(0, 80) + "…" : text,
+          icon: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23f3a683' d='M17,8C8,10 5.9,16.17 3.82,21.34L5.71,22L6.66,19.7C7.14,19.87 7.64,20 8,20C19,20 22,3 22,3C21,5 14,5.25 9,6.25C4,7.25 2,11.5 2,13.5C2,15.5 3.75,17.25 3.75,17.25C7,8 17,8 17,8Z'/%3E%3C/svg%3E",
+          tag: "matcha-chat-msg",
+          silent: false,
+        });
+        n.onclick = () => {
+          window.focus();
+          n.close();
+        };
+      }
+
+      // ── File & Photo Sending ──────────────────────────────────────
       const fileInput       = document.getElementById("file-input");
+
       const btnAttach       = document.getElementById("btn-attach");
       const filePreviewBar  = document.getElementById("file-preview-bar");
       const lightbox        = document.getElementById("lightbox");
@@ -3813,6 +4162,10 @@
           renderDateDivider();
           renderWelcomeCard(currentChannel, currentUser);
           addPresenceUser(currentUser, true);
+          // Request notification permission on join (user gesture context)
+          requestNotifPermission();
+          // Re-apply saved background (chat-messages was cleared above)
+          if (activeBgValue) applyBackground(activeBgValue);
         }, 400);
       });
 
