@@ -3036,6 +3036,27 @@
       }
 
       // ── Initiator flow ───────────────────────────────────────────
+      /** Map a getUserMedia error to a friendly message */
+      function friendlyMicError(err) {
+        const name = err.name || "";
+        const msg  = (err.message || "").toLowerCase();
+        if (name === "NotFoundError" || name === "DevicesNotFoundError" ||
+            msg.includes("not found") || msg.includes("could not be found") ||
+            msg.includes("object can not be found")) {
+          return "No microphone found. Please connect a microphone and try again.";
+        }
+        if (name === "NotAllowedError" || name === "PermissionDeniedError") {
+          return "Microphone access was denied. Please allow microphone permission in your browser settings.";
+        }
+        if (name === "NotReadableError" || name === "TrackStartError") {
+          return "Microphone is in use by another app. Please close other apps using the mic and try again.";
+        }
+        if (name === "OverconstrainedError") {
+          return "No microphone satisfies the required constraints.";
+        }
+        return err.message || "Unknown microphone error.";
+      }
+
       async function initiateCall() {
         if (callState.active || callState.peer) return;
 
@@ -3068,7 +3089,7 @@
             video: false,
           });
         } catch (err) {
-          renderSystemMessage(`⚠️ Microphone error: ${err.message}`);
+          renderSystemMessage(`⚠️ Microphone error: ${friendlyMicError(err)}`);
           callState.peer = null;
           callState.isInitiator = false;
           hideCallOverlay();
@@ -3127,7 +3148,7 @@
             video: false,
           });
         } catch (err) {
-          renderSystemMessage(`⚠️ Microphone error: ${err.message}`);
+          renderSystemMessage(`⚠️ Microphone error: ${friendlyMicError(err)}`);
           wsSend({ type: "call_declined", target: from });
           callState.peer = null;
           hideCallOverlay();
@@ -3478,7 +3499,9 @@
       }
 
       // ── Send file ─────────────────────────────────────────────
-      function handleSendFile() {
+      // Files are uploaded via HTTP POST to /upload instead of WebSocket
+      // to avoid WebSocket proxy payload size limits on Render/nginx.
+      async function handleSendFile() {
         const { file, dataURL } = stagedFile;
         if (!file || !dataURL) return;
 
@@ -3489,15 +3512,31 @@
           dataURL,
         };
 
-        // Render locally
+        // Render locally immediately so the sender sees it right away
         renderFileMessage(currentUser, payload, true);
 
-        // Broadcast over WebSocket
-        if (ws && ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ type: "file", ...payload }));
-        }
-
+        // Clear stage before async send so the user can attach another file
         clearStagedFile();
+
+        // Upload via HTTP POST — avoids WebSocket message-size limits on Render
+        try {
+          const res = await fetch("/upload", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              channel:  currentChannel,
+              password: currentPassword,
+              username: currentUser,
+              ...payload,
+            }),
+          });
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            renderSystemMessage(`⚠️ File send failed: ${err.error || res.status}`);
+          }
+        } catch (err) {
+          renderSystemMessage(`⚠️ File send failed: ${err.message}`);
+        }
       }
 
       // ── Receive file ──────────────────────────────────────────

@@ -55,8 +55,18 @@ function sendToUser(roomKey, senderName, targetName, data) {
 const PORT = process.env.PORT || 3000;
 
 const server = http.createServer((req, res) => {
+  // CORS preflight
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  if (req.method === "OPTIONS") {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
   // Serve the chat HTML
-  if (req.url === "/" || req.url === "/index.html") {
+  if (req.method === "GET" && (req.url === "/" || req.url === "/index.html")) {
     const filePath = path.join(__dirname, "index.html");
     fs.readFile(filePath, (err, data) => {
       if (err) {
@@ -69,13 +79,52 @@ const server = http.createServer((req, res) => {
     });
     return;
   }
+
+  // ── POST /upload  ────────────────────────────────────────────────
+  // Accepts JSON body: { channel, password, username, filename, mimeType, size, dataURL }
+  // Broadcasts the file to the room and returns { ok: true }.
+  // Using HTTP instead of WebSocket avoids Render's WS proxy size limits.
+  if (req.method === "POST" && req.url === "/upload") {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk;
+      // 20 MB hard limit on body size to prevent abuse
+      if (body.length > 20 * 1024 * 1024) {
+        res.writeHead(413);
+        res.end(JSON.stringify({ ok: false, error: "Payload too large" }));
+        req.destroy();
+      }
+    });
+    req.on("end", () => {
+      try {
+        const msg = JSON.parse(body);
+        const { channel, password, username, filename, mimeType, size, dataURL } = msg;
+        if (!channel || !password || !username || !dataURL) {
+          res.writeHead(400);
+          res.end(JSON.stringify({ ok: false, error: "Missing fields" }));
+          return;
+        }
+        const roomKey = hashRoom(channel, password);
+        // Exclude the sender's own socket so they don't get a duplicate
+        const senderWs = usernameMap.get(roomKey)?.get(username);
+        broadcast(roomKey, { type: "file", username, filename, mimeType, size, dataURL }, senderWs);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true }));
+      } catch (e) {
+        res.writeHead(400);
+        res.end(JSON.stringify({ ok: false, error: "Invalid JSON" }));
+      }
+    });
+    return;
+  }
+
   res.writeHead(404);
   res.end("Not Found");
 });
 
 // ── WebSocket Server ─────────────────────────────────────────────────
 
-const wss = new WebSocketServer({ server });
+const wss = new WebSocketServer({ server, maxPayload: 50 * 1024 * 1024 }); // 50 MB WS limit
 
 // ── Heartbeat ────────────────────────────────────────────────────────
 // Ping every client every 30 s.  If a client doesn't respond with pong,
